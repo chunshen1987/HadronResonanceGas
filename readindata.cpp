@@ -133,53 +133,7 @@ void calculate_particle_yield(int Nparticle, particle_info* particle, double Tem
 
 void calculate_particle_mu(int Nparticle, particle_info* particle, double* particle_mu)
 {
-   int Nstable_particle;
-   int Idummy;
-   char cdummy[256];
-   cout << "Reading particle table and calculating chemical potential for particles...";
-   ifstream particletable("EOS/EOS_particletable.dat");
-   particletable >> Nstable_particle;
-   double *stable_particle_monval = new double [Nstable_particle];
-   for(int i=0; i<Nstable_particle; i++)
-   {
-       particletable >> Idummy >> stable_particle_monval[i];
-       particletable.getline(cdummy, 256);
-   }
-   particletable.close();
-
    for(int i=0; i<Nparticle; i++) particle[i].mu = 0.0;
-
-   for(int i=0; i<Nstable_particle; i++)
-      for(int j=0; j<Nparticle; j++)
-         if(particle[j].monval == stable_particle_monval[i])
-         {
-            particle[j].stable = 1;
-            particle[j].mu = particle_mu[i];
-            break;
-         }
-
-   for(int i=0; i < Nparticle ; i++)
-   {
-      if(particle[i].stable==0)
-      {
-         for(int j=0; j < particle[i].decays; j++)
-         {
-            for(int k=0; k < abs(particle[i].decays_Npart[j]); k++)
-            {
-               for(int l=0; l < Nparticle; l++)
-               {
-                  if(particle[i].decays_part[j][k] == particle[l].monval)
-                  {
-                     particle[i].mu += particle[i].decays_branchratio[j]*particle[l].mu;
-                     break;
-                  }
-                  if(l==Nparticle-1)
-                     cout<<"warning: can not find particle" <<  particle[i].name << endl;
-               }
-            }
-         }
-      }
-   }
    return;
 }
 

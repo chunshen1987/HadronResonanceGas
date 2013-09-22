@@ -24,9 +24,9 @@ ifeq "$(MAIN)" ""
 MAIN		=	HadronResonanceGas.e
 endif
 
-SRC		=	main.cpp readindata.cpp \
+SRC		=	main.cpp particle.cpp readindata.cpp \
 
-INC		= 	readindata.h parameters.h Stopwatch.h \
+INC		= 	particle.h readindata.h parameters.h Stopwatch.h \
 
 # -------------------------------------------------
 
