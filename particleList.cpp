@@ -13,8 +13,7 @@ using namespace std;
 
 particleList::particleList(string particleTableName)
 {
-   particleListFilename = particleTableName;
-
+   particleListFilename = particleTableName; //filename of pdg data file
 }
 
 particleList::~particleList()
@@ -23,6 +22,7 @@ particleList::~particleList()
 }
 
 void particleList::readParticlelistTable()
+//read in particle information from pdg data file
 {
    cout << "Reading in particle resonance decay table...";
    ifstream resofile(particleListFilename.c_str());
@@ -95,6 +95,7 @@ void particleList::readParticlelistTable()
 }
 
 int particleList::get_particle_idx(int particle_monval)
+// return the idx in particleList for given particle Monte-Carlo number
 {
    for(int i = 0; i < partList.size(); i++)
       if(partList[i]->getMonval() == particle_monval)

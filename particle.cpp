@@ -19,6 +19,7 @@ particle::particle(int monval_in, string name_in, double mass_in, double width_i
     NdecayChannel = NdecayChannel_in;
     stable = 0;
 
+    //determine Bose/Fermi statistic for particle
     if(baryon == 0)
        sign = -1;
     else
@@ -41,6 +42,7 @@ particle::~particle()
 }
 
 void particle::addResonancedecays(double branchratio, int Npart, int* decayChannelparts)
+//add resonance decay channel for particle
 {
     if(channelIdx > NdecayChannel-1)
     {
@@ -59,6 +61,7 @@ void particle::addResonancedecays(double branchratio, int Npart, int* decayChann
 }
 
 int particle::getAntiparticleMonval()
+//return the corresponding anti-particle' Monte-Carlo value
 {
    if(baryon == 0 && charge == 0 && strange == 0)
       return(monval);
