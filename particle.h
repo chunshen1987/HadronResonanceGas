@@ -32,12 +32,16 @@ class particle
 
        int channelIdx;
     public:
-       particle(int monval_in, string name_in, double mass_in, double width_in, int gspin_in, int baryon_in, int strange_in, int charm_in, int bottom_in, int gisospin_in, int charge_in, int stable_in, int sign_in, int NdecayChannel_in);
+       particle(int monval_in, string name_in, double mass_in, double width_in, int gspin_in, int baryon_in, int strange_in, int charm_in, int bottom_in, int gisospin_in, int charge_in, int NdecayChannel_in);
        ~particle();
        
        void addResonancedecays(double branchratio, int Npart, int* decays_part);
+       int getAntiparticleMonval();
+       int getMonval() {return(monval);};
        string getName() {return(name);};
        double getMass() {return(mass);};
+       int getBaryon() {return(baryon);};
+       int getCharge() {return(charge);};
        int getSpinfactor() {return(gspin);};
        double getMu() {return(mu);};
        int getSign() {return(sign);};

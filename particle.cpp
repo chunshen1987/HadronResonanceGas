@@ -3,7 +3,7 @@
 #include "particle.h"
 using namespace std;
 
-particle::particle(int monval_in, string name_in, double mass_in, double width_in, int gspin_in, int baryon_in, int strange_in, int charm_in, int bottom_in, int gisospin_in, int charge_in, int stable_in, int sign_in, int NdecayChannel_in)
+particle::particle(int monval_in, string name_in, double mass_in, double width_in, int gspin_in, int baryon_in, int strange_in, int charm_in, int bottom_in, int gisospin_in, int charge_in, int NdecayChannel_in)
 {
     monval = monval_in;
     name = name_in;
@@ -16,9 +16,13 @@ particle::particle(int monval_in, string name_in, double mass_in, double width_i
     bottom = bottom_in;
     gisospin = gisospin_in;
     charge = charge_in;
-    stable = stable_in;
-    sign = sign_in;
     NdecayChannel = NdecayChannel_in;
+    stable = 0;
+
+    if(baryon == 0)
+       sign = -1;
+    else
+       sign = 1;
 
     decays_branchratio = new double [NdecayChannel];
     decays_Npart = new int [NdecayChannel];
@@ -28,7 +32,7 @@ particle::particle(int monval_in, string name_in, double mass_in, double width_i
 }
 
 particle::~particle()
-{
+{  
     delete [] decays_branchratio;
     delete [] decays_Npart;
     for(int i = 0; i < NdecayChannel; i++)
@@ -48,7 +52,16 @@ void particle::addResonancedecays(double branchratio, int Npart, int* decayChann
     decays_part[channelIdx] = new int [Npart];
     for(int i = 0; i < Npart; i++)
        decays_part[channelIdx][i] = decayChannelparts[i];
-
     channelIdx++;
+    if(NdecayChannel == 1 && decays_Npart[0] == 1) stable = 1;
+
     return;
+}
+
+int particle::getAntiparticleMonval()
+{
+   if(baryon == 0 && charge == 0 && strange == 0)
+      return(monval);
+   else
+      return(-monval);
 }

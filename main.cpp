@@ -23,12 +23,14 @@
 #include "readindata.h"
 #include "Stopwatch.h"
 #include "particle.h"
+#include "particleList.h"
 
 using namespace std;
 
 int main()
 {
-   particle testparticle(211, "pion", 0.14, 0.0, 1, 0, 0, 0, 0, 1, 1, 1, -1, 2);
+   /*
+   particle testparticle(211, "pion", 0.14, 0.0, 1, 0, 0, 0, 0, 1, 1, 2);
    int* decayPart = new int [2];
    decayPart[0] = 111; decayPart[1] = 21;
    testparticle.addResonancedecays(0.5, 2, decayPart);
@@ -37,7 +39,10 @@ int main()
    decayPart1[0] = 111; decayPart1[1] = 21; decayPart1[2] = 32;
    testparticle.addResonancedecays(0.5, 3, decayPart1);
    delete [] decayPart1;
+   */
 
+   particleList testList("EOS/pdg.dat");
+   testList.readParticlelistTable();
    exit(0);
 
    Stopwatch sw;

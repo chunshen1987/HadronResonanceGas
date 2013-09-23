@@ -11,7 +11,7 @@
 ##  
 
 CC := C++
-CFLAGS := -O3 -I/sw/include
+CFLAGS := -g -I/sw/include
 
 RM		=	rm -f
 O               =       .o
@@ -24,9 +24,10 @@ ifeq "$(MAIN)" ""
 MAIN		=	HadronResonanceGas.e
 endif
 
-SRC		=	main.cpp particle.cpp readindata.cpp \
+SRC		=	main.cpp particle.cpp particleList.cpp readindata.cpp \
 
 INC		= 	particle.h readindata.h parameters.h Stopwatch.h \
+                  particleList.h
 
 # -------------------------------------------------
 
