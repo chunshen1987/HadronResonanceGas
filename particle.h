@@ -24,6 +24,7 @@ class particle
        int sign;                    // Bosons or Fermions
 
        double yield;                // particle yield at given T and mu
+       double ed, sd, pressure;     // thermodynamic quantities at given T and mu
      
        int NdecayChannel;           // number of decay channels
        double* decays_branchratio;  // branching ratio of each decay channel
@@ -36,6 +37,11 @@ class particle
        ~particle();
        
        void addResonancedecays(double branchratio, int Npart, int* decays_part);
+       void calculateChemicalpotential(double mu_B, double mu_S);
+       void calculateParticleYield(double Temperature);
+       double calculateEnergydensity(double Temperature);
+       double calculatePressure(double Temperature);
+       double calculateEntropydensity(double Temperature);
        int getAntiparticleMonval();
        int getMonval() {return(monval);};
        string getName() {return(name);};
@@ -45,6 +51,7 @@ class particle
        int getSpinfactor() {return(gspin);};
        double getMu() {return(mu);};
        int getSign() {return(sign);};
+       double getParticleYield() {return(yield);};
 
 };
 

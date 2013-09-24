@@ -89,6 +89,7 @@ void particleList::readParticlelistTable()
       }
    }
    resofile.close();
+   partList.erase(partList.begin());  //delete gamma
    cout << "done! Antiparticles are added!" << endl;
    cout << "There are totally " << partList.size() << " particles." << endl;
    return;
@@ -104,62 +105,57 @@ int particleList::get_particle_idx(int particle_monval)
    exit(1);
 }
 
-/*
-void calculate_particle_yield(int Nparticle, particle_info* particle, double Temperature)
+void particleList::calculate_particle_mu(double mu_B, double mu_S)
+// calculate particle chemical potentials
+// need to add support for partial chemical equilibrium
 {
-   double results;
-   int order = 10;
-   for(int i=1; i<Nparticle; i++)
+   for(int i = 0; i < partList.size(); i++)
+      partList[i]->calculateChemicalpotential(mu_B, mu_S);
+   return;
+}
+
+void particleList::calculate_particle_yield(double Temperature, double mu_B, double mu_S)
+//calculate particle yield
+{
+   calculate_particle_mu(mu_B, mu_S);
+   for(int i = 0; i < partList.size(); i++)  
    {
-      results = 0.0;
-      double prefactor = particle[i].gspin/(2*M_PI*M_PI)*particle[i].mass*particle[i].mass;
-      for(int j=0; j<order; j++)
-      {
-         double arg = (j+1)*particle[i].mass/Temperature;
-         double lambda = exp(particle[i].mu/Temperature);
-         results += pow((-1.0)*particle[i].sing, j)/(j+1)*pow(lambda, j+1)*gsl_sf_bessel_Kn(2, arg);
-      }
-      results = results*prefactor;
-      particle[i].yield = results;
+      partList[i]->calculateParticleYield(Temperature);
+      cout << partList[i]->getName() << " : " << partList[i]->getParticleYield() << endl;
    }
    return;
 }
 
-void calculate_particle_mu(int Nparticle, particle_info* particle, double* particle_mu)
+void particleList::calculateSystemenergyDensity(double Temperature, double mu_B, double mu_S)
+//calculate the energy density of the system at given T and mu
 {
-   for(int i=0; i<Nparticle; i++) particle[i].mu = 0.0;
+   double result = 0.0e0;
+   calculate_particle_mu(mu_B, mu_S);
+   for(int i = 0; i < partList.size(); i++)
+      result += partList[i]->calculateEnergydensity(Temperature);
+   edSystem = result;
    return;
 }
 
-void read_decdat_mu(int N_stable, double* particle_mu)
+void particleList::calculateSystemPressure(double Temperature, double mu_B, double mu_S)
+//calculate the pressure of the system at given T and mu
 {
-  cout<<" -- Read chemical potential for stable particles...";
-  ostringstream decdat_mu_stream;
-  double dummy;
-  decdat_mu_stream << "results/decdat_mu.dat";
-  ifstream decdat_mu(decdat_mu_stream.str().c_str());
-
-  decdat_mu >> dummy;  //not used in the code plz ignore it
-  for(int i=0; i<N_stable; i++)
-     decdat_mu >> particle_mu[i];
-  cout<<"done" << endl;
-  return;
+   double result = 0.0e0;
+   calculate_particle_mu(mu_B, mu_S);
+   for(int i = 0; i < partList.size(); i++)
+      result += partList[i]->calculatePressure(Temperature);
+   pressureSys = result;
+   return;
 }
 
-int get_particle_idx(particle_info* particle, int Nparticle, int particle_monval)
+void particleList::calculateSystementropyDensity(double Temperature, double mu_B, double mu_S)
+//calculate the entropy density of the system at given T and mu
 {
-   int idx = 0;
-   int i;
-   for(i=0; i<Nparticle; i++)
-      if(particle[i].monval == particle_monval)
-      {
-         idx = i;
-         return(idx);
-      }
-   if(i == Nparticle)
-   {
-      cout << "get_particle_idx: Error : can not find particle index in the particle list." << endl;
-      exit(0);
-   }
-   return(0);
-}*/
+   double result = 0.0e0;
+   calculate_particle_mu(mu_B, mu_S);
+   for(int i = 0; i < partList.size(); i++)
+      result += partList[i]->calculateEntropydensity(Temperature);
+   sdSystem = result;
+   cout << sdSystem << endl;
+   return;
+}

@@ -1,4 +1,7 @@
 #include<iostream>
+#include<cmath>
+
+#include<gsl/gsl_sf_bessel.h>
 
 #include "particle.h"
 using namespace std;
@@ -67,4 +70,68 @@ int particle::getAntiparticleMonval()
       return(monval);
    else
       return(-monval);
+}
+
+void particle::calculateChemicalpotential(double mu_B, double mu_S)
+{
+   mu = mu_B*baryon + mu_S*strange;
+   return;
+}
+
+void particle::calculateParticleYield(double Temperature)
+{
+   double results;
+   int order = 10;
+   results = 0.0;
+   double prefactor = gspin/(2*M_PI*M_PI)*mass*mass;
+   for(int j=0; j<order; j++)
+   {
+      double arg = (j+1)*mass/Temperature;
+      double lambda = exp(mu/Temperature);
+      results += pow((-1.0)*sign, j)/(j+1)*pow(lambda, j+1)*gsl_sf_bessel_Kn(2, arg);
+   }
+   results = results*prefactor;
+   yield = results;
+   return;
+}
+
+double particle::calculateEnergydensity(double Temperature)
+{
+   double results;
+   int order = 10;
+   results = 0.0;
+   double prefactor = gspin/(2*M_PI*M_PI)*pow(mass,4);
+   for(int j=0; j<order; j++)
+   {
+      double arg = (j+1)*mass/Temperature;
+      double lambda = exp(mu/Temperature);
+      results += pow((-1.0)*sign, j)*pow(lambda, j+1)*(3.*gsl_sf_bessel_Kn(2, arg)/(arg*arg) + gsl_sf_bessel_Kn(1, arg)/arg);
+   }
+   results = results*prefactor;
+   ed = results;
+   return(results);
+}
+
+double particle::calculatePressure(double Temperature)
+{
+   double results;
+   int order = 10;
+   results = 0.0;
+   double prefactor = gspin/(2*M_PI*M_PI)*pow(mass,2)*pow(Temperature, 2);
+   for(int j=0; j<order; j++)
+   {
+      double arg = (j+1)*mass/Temperature;
+      double lambda = exp(mu/Temperature);
+      results += pow((-1.0)*sign, j)/pow(j+1.,2)*pow(lambda, j+1)*gsl_sf_bessel_Kn(2, arg);
+   }
+   results = results*prefactor;
+   pressure = results;
+   return(results);
+}
+
+double particle::calculateEntropydensity(double Temperature)
+// calculate the entropy density using the first law of thermodynamics at give T and mu
+{
+   sd = (ed + pressure - mu*yield)/Temperature;
+   return(sd);
 }
