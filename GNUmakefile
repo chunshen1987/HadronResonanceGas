@@ -24,10 +24,9 @@ ifeq "$(MAIN)" ""
 MAIN		=	HadronResonanceGas.e
 endif
 
-SRC		=	main.cpp particle.cpp particleList.cpp readindata.cpp \
+SRC		=	main.cpp particle.cpp particleList.cpp \
 
-INC		= 	particle.h readindata.h parameters.h Stopwatch.h \
-                  particleList.h
+INC		= 	particle.h Stopwatch.h particleList.h \
 
 # -------------------------------------------------
 
@@ -73,4 +72,4 @@ install:	$(TARGET)
 		cp $(TARGET) $(INSTPATH)
 
 # --------------- Dependencies -------------------
-main.cpp : readindata.cpp Stopwatch.h parameters.h
+main.cpp : Stopwatch.h

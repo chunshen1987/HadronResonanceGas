@@ -14,6 +14,7 @@ using namespace std;
 particleList::particleList(string particleTableName)
 {
    particleListFilename = particleTableName; //filename of pdg data file
+   readParticlelistTable(particleListFilename);
 }
 
 particleList::~particleList()
@@ -21,11 +22,11 @@ particleList::~particleList()
 
 }
 
-void particleList::readParticlelistTable()
+void particleList::readParticlelistTable(string tableName)
 //read in particle information from pdg data file
 {
    cout << "Reading in particle resonance decay table...";
-   ifstream resofile(particleListFilename.c_str());
+   ifstream resofile(tableName.c_str());
    int monval;
    string name;
    double mass, width;
@@ -119,10 +120,7 @@ void particleList::calculate_particle_yield(double Temperature, double mu_B, dou
 {
    calculate_particle_mu(mu_B, mu_S);
    for(int i = 0; i < partList.size(); i++)  
-   {
       partList[i]->calculateParticleYield(Temperature);
-      cout << partList[i]->getName() << " : " << partList[i]->getParticleYield() << endl;
-   }
    return;
 }
 
@@ -130,7 +128,6 @@ void particleList::calculateSystemenergyDensity(double Temperature, double mu_B,
 //calculate the energy density of the system at given T and mu
 {
    double result = 0.0e0;
-   calculate_particle_mu(mu_B, mu_S);
    for(int i = 0; i < partList.size(); i++)
       result += partList[i]->calculateEnergydensity(Temperature);
    edSystem = result;
@@ -141,7 +138,6 @@ void particleList::calculateSystemPressure(double Temperature, double mu_B, doub
 //calculate the pressure of the system at given T and mu
 {
    double result = 0.0e0;
-   calculate_particle_mu(mu_B, mu_S);
    for(int i = 0; i < partList.size(); i++)
       result += partList[i]->calculatePressure(Temperature);
    pressureSys = result;
@@ -152,10 +148,44 @@ void particleList::calculateSystementropyDensity(double Temperature, double mu_B
 //calculate the entropy density of the system at given T and mu
 {
    double result = 0.0e0;
-   calculate_particle_mu(mu_B, mu_S);
    for(int i = 0; i < partList.size(); i++)
       result += partList[i]->calculateEntropydensity(Temperature);
    sdSystem = result;
-   cout << sdSystem << endl;
+   return;
+}
+
+void particleList::calculateSystemEOS(double mu_B, double mu_S)
+//calculate the EOS of given system, e,p,s as functions of T at given mu_B and mu_S
+{ 
+   cout << "calculate the EOS of the system .... " << endl;
+   int nT = 500;
+   double T_i = 0.001;        // unit: (GeV)
+   double T_f = 0.5;          // unit: (GeV)
+   double dT = (T_f - T_i)/(nT + 1);
+   double* temp_ptr = new double [nT];
+   double* ed_ptr = new double [nT];
+   double* sd_ptr = new double [nT];
+   double* pressure_ptr = new double [nT];
+   for(int i = 0; i < nT; i++)
+   {
+      temp_ptr[i] = T_i + i*dT;
+      calculate_particle_yield(temp_ptr[i], mu_B, mu_S);
+      calculateSystemenergyDensity(temp_ptr[i]);
+      calculateSystemPressure(temp_ptr[i]);
+      calculateSystementropyDensity(temp_ptr[i]);
+      ed_ptr[i] = edSystem;
+      sd_ptr[i] = sdSystem;
+      pressure_ptr[i] = pressureSys;
+   }
+   ofstream output("./EOS.dat");
+   for(int i = 0; i < nT; i++)
+      output << scientific << setw(20) << setprecision(8)
+             << temp_ptr[i] << "   "  << ed_ptr[i] 
+             << "   " << sd_ptr[i] << "   " << pressure_ptr[i] << endl;
+   output.close();
+   delete [] temp_ptr;
+   delete [] ed_ptr;
+   delete [] sd_ptr;
+   delete [] pressure_ptr;
    return;
 }

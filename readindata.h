@@ -1,7 +1,6 @@
 #ifndef READINDATA_H
 #define READINDATA_H
 
-#include "parameters.h"
 #include<fstream>
 #include<vector>
 using namespace std;

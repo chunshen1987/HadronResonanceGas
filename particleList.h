@@ -1,7 +1,6 @@
 #ifndef particleList_H
 #define particleList_H
 
-#include "parameters.h"
 #include "particle.h"
 #include<string>
 #include<fstream>
@@ -19,7 +18,8 @@ class particleList
        particleList(string particleTableName);
        ~particleList();
 
-       void readParticlelistTable();
+       void readParticlelistTable(string tableName);
+       void calculateSystemEOS(double mu_B=0.0, double mu_S=0.0);
        void calculate_particle_mu(double mu_B, double mu_S);
        void calculate_particle_yield(double Temperature, double mu_B=0.0, double mu_S=0.0);
        void calculateSystemenergyDensity(double Temperature, double mu_B=0.0, double mu_S=0.0);
