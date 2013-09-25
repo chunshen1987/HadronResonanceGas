@@ -32,6 +32,8 @@ int main()
 
    particleList hadronList("EOS/pdg.dat");
    hadronList.calculateSystemEOS();
+   hadronList.calculateSystemEOS(0.02);
+   hadronList.calculateSystemEOS(0.4);
    
    sw.toc();
    cout << "Program totally finished in " << sw.takeTime() << " sec." << endl;

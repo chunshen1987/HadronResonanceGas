@@ -157,15 +157,16 @@ void particleList::calculateSystementropyDensity(double Temperature, double mu_B
 void particleList::calculateSystemEOS(double mu_B, double mu_S)
 //calculate the EOS of given system, e,p,s as functions of T at given mu_B and mu_S
 { 
-   cout << "calculate the EOS of the system .... " << endl;
-   int nT = 500;
-   double T_i = 0.001;        // unit: (GeV)
-   double T_f = 0.5;          // unit: (GeV)
-   double dT = (T_f - T_i)/(nT + 1);
+   cout << "calculate the EOS of the system with muB = " << mu_B << " GeV and mu_S = " << mu_S << " GeV .... " << endl;
+   int nT = 200;
+   double T_i = 0.01;        // unit: (GeV)
+   double T_f = 0.2;          // unit: (GeV)
+   double dT = (T_f - T_i)/(nT - 1);
    double* temp_ptr = new double [nT];
    double* ed_ptr = new double [nT];
    double* sd_ptr = new double [nT];
    double* pressure_ptr = new double [nT];
+   double* cs2_ptr = new double [nT];
    for(int i = 0; i < nT; i++)
    {
       temp_ptr[i] = T_i + i*dT;
@@ -177,15 +178,25 @@ void particleList::calculateSystemEOS(double mu_B, double mu_S)
       sd_ptr[i] = sdSystem;
       pressure_ptr[i] = pressureSys;
    }
-   ofstream output("./EOS.dat");
+   //calculate speed of sound cs^2 = dP/de
+   for(int i = 0; i < nT - 1; i++)
+      cs2_ptr[i] = (pressure_ptr[i+1] - pressure_ptr[i])/(ed_ptr[i+1] - ed_ptr[i]+1e-30);
+   cs2_ptr[nT-1] = cs2_ptr[nT-2];
+
+   //output EOS table
+   ostringstream EOSfilename;
+   EOSfilename << "./EOS_muB_" << mu_B << "_muS_" << mu_S << ".dat";
+   ofstream output(EOSfilename.str().c_str());
    for(int i = 0; i < nT; i++)
       output << scientific << setw(20) << setprecision(8)
              << temp_ptr[i] << "   "  << ed_ptr[i] 
-             << "   " << sd_ptr[i] << "   " << pressure_ptr[i] << endl;
+             << "   " << sd_ptr[i] << "   " << pressure_ptr[i] 
+             << "   " << cs2_ptr[i] << endl;
    output.close();
    delete [] temp_ptr;
    delete [] ed_ptr;
    delete [] sd_ptr;
    delete [] pressure_ptr;
+   delete [] cs2_ptr;
    return;
 }

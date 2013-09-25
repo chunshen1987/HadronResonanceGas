@@ -8,6 +8,8 @@ using namespace std;
 
 particle::particle(int monval_in, string name_in, double mass_in, double width_in, int gspin_in, int baryon_in, int strange_in, int charm_in, int bottom_in, int gisospin_in, int charge_in, int NdecayChannel_in)
 {
+    hbarC = 0.19733;
+    trunOrder = 10;
     monval = monval_in;
     name = name_in;
     mass = mass_in;
@@ -81,10 +83,9 @@ void particle::calculateChemicalpotential(double mu_B, double mu_S)
 void particle::calculateParticleYield(double Temperature)
 {
    double results;
-   int order = 10;
    results = 0.0;
    double prefactor = gspin/(2*M_PI*M_PI)*mass*mass;
-   for(int j=0; j<order; j++)
+   for(int j=0; j<trunOrder; j++)
    {
       double arg = (j+1)*mass/Temperature;
       double lambda = exp(mu/Temperature);
@@ -98,40 +99,38 @@ void particle::calculateParticleYield(double Temperature)
 double particle::calculateEnergydensity(double Temperature)
 {
    double results;
-   int order = 10;
    results = 0.0;
    double prefactor = gspin/(2*M_PI*M_PI)*pow(mass,4);
-   for(int j=0; j<order; j++)
+   for(int j=0; j<trunOrder; j++)
    {
       double arg = (j+1)*mass/Temperature;
       double lambda = exp(mu/Temperature);
       results += pow((-1.0)*sign, j)*pow(lambda, j+1)*(3.*gsl_sf_bessel_Kn(2, arg)/(arg*arg) + gsl_sf_bessel_Kn(1, arg)/arg);
    }
    results = results*prefactor;
-   ed = results;
-   return(results);
+   ed = results/pow(hbarC,3);    // unit: GeV/fm^3
+   return(ed);
 }
 
 double particle::calculatePressure(double Temperature)
 {
    double results;
-   int order = 10;
    results = 0.0;
    double prefactor = gspin/(2*M_PI*M_PI)*pow(mass,2)*pow(Temperature, 2);
-   for(int j=0; j<order; j++)
+   for(int j=0; j<trunOrder; j++)
    {
       double arg = (j+1)*mass/Temperature;
       double lambda = exp(mu/Temperature);
       results += pow((-1.0)*sign, j)/pow(j+1.,2)*pow(lambda, j+1)*gsl_sf_bessel_Kn(2, arg);
    }
    results = results*prefactor;
-   pressure = results;
-   return(results);
+   pressure = results/pow(hbarC, 3);    // unit : GeV/fm^3
+   return(pressure);
 }
 
 double particle::calculateEntropydensity(double Temperature)
 // calculate the entropy density using the first law of thermodynamics at give T and mu
 {
-   sd = (ed + pressure - mu*yield)/Temperature;
+   sd = (ed + pressure - mu*yield)/Temperature;    // unit : 1/fm^3
    return(sd);
 }
