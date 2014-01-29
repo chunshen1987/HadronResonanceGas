@@ -58,7 +58,7 @@ mkobjdir:
 		-@mkdir -p $(OBJDIR)
 
 $(TARGET):	$(OBJECTS)	
-		$(CC) $(LDFLAGS) $(OBJECTS) -o $(TARGET)
+		$(CC) $(OBJECTS) $(LDFLAGS) -o $(TARGET)
 #		strip $(TARGET)
 
 clean:		
