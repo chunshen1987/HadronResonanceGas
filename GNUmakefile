@@ -11,7 +11,7 @@
 ##  
 
 CC := g++
-CFLAGS := -O3 $(shell gsl-config --cflags)
+CFLAGS := -g $(shell gsl-config --cflags)
 
 RM		=	rm -f
 O               =       .o
@@ -24,9 +24,9 @@ ifeq "$(MAIN)" ""
 MAIN		=	HadronResonanceGas.e
 endif
 
-SRC		=	main.cpp particle.cpp particleList.cpp \
+SRC		=	main.cpp particle.cpp particleList.cpp chemical_potential.cpp Table2D.cpp Arsenal.cpp \
 
-INC		= 	particle.h Stopwatch.h particleList.h \
+INC		= 	particle.h Stopwatch.h particleList.h chemical_potential.h Table2D.h Arsenal.h \
 
 # -------------------------------------------------
 

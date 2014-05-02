@@ -2,6 +2,7 @@
 #define particleList_H
 
 #include "particle.h"
+#include "Chemical_potential.h"
 #include<string>
 #include<fstream>
 #include<vector>
@@ -27,6 +28,8 @@ class particleList
        void calculateSystementropyDensity(double Temperature, double mu_B=0.0, double mu_S=0.0);
        int get_particle_idx(int particle_monval);
        int getParticlelistSize() {return(partList.size());};
+       void calculate_particle_chemical_potential(double Temperature, Chemical_potential* mu_tb);
+       void output_particle_chemical_potentials(Chemical_potential* mu_tb);
 };
 
 

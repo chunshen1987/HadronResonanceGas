@@ -22,6 +22,7 @@
 #include "Stopwatch.h"
 #include "particle.h"
 #include "particleList.h"
+#include "Chemical_potential.h"
 
 using namespace std;
 
@@ -31,6 +32,11 @@ int main()
    sw.tic();
 
    particleList hadronList("EOS/pdg.dat");
+   Chemical_potential chem_table;
+   chem_table.readin_chempotential_table("chemical_potential_tb/s95p/s95p-PCE165-v0/s95p-v0-PCE165_chemvsT.dat");
+   chem_table.Set_chemical_potential();
+   hadronList.output_particle_chemical_potentials(&chem_table);
+
    hadronList.calculateSystemEOS();
    hadronList.calculateSystemEOS(0.02);
    hadronList.calculateSystemEOS(0.4);

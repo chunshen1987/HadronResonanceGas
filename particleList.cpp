@@ -96,6 +96,101 @@ void particleList::readParticlelistTable(string tableName)
    return;
 }
 
+void particleList::output_particle_chemical_potentials(Chemical_potential* mu_tb)
+{
+   ofstream particle_mu_table("chemical_potentials.dat");
+   particle_mu_table << scientific << setw(18) << setprecision(8)
+                     << 0.0 << "    ";
+   for(int i = 0; i < partList.size(); i++)
+   {
+      particle_mu_table << scientific << setw(18) << setprecision(8)
+                        << partList[i]->getMass() << "    ";
+   }
+   particle_mu_table << endl;
+
+   double Ti = 0.1;
+   double Tf = 0.2;
+   double dT = 0.001;
+   int nT = (Tf - Ti)/dT + 1;
+   for(int i = 0 ; i < nT; i++)
+   {
+      double T_local = Ti + i*dT;
+      calculate_particle_chemical_potential(T_local, mu_tb);
+      particle_mu_table << scientific << setw(18) << setprecision(8)
+                        << T_local << "    " ;
+      for (int j = 0; j < partList.size(); j++)
+          particle_mu_table << scientific << setw(18) << setprecision(8)
+                            << partList[j]->getMu() << "    ";
+      particle_mu_table << endl;
+   }
+   particle_mu_table.close();
+}
+
+void particleList::calculate_particle_chemical_potential(double Temperature, Chemical_potential* mu_tb)
+{
+   int N_mu = mu_tb->get_Nstable();
+   double *mu_stable = new double [N_mu];
+   mu_tb->output_stable_mu(Temperature, mu_stable);
+   
+   int Nstable_particle;
+   int Idummy;
+   char cdummy[256];
+   ifstream particletable("EOS/EOS_particletable.dat");
+   particletable >> Nstable_particle;
+   if(N_mu != Nstable_particle)
+   {
+      cout << "chemical potential table is not compatible with EOS_particletable.dat" << endl;
+      exit(1);
+   }
+   double *stable_particle_monval = new double [Nstable_particle];
+   for(int i=0; i<Nstable_particle; i++)
+   {
+       particletable >> Idummy >> stable_particle_monval[i];
+       particletable.getline(cdummy, 256);
+   }
+   particletable.close();
+      
+   for(int i=0; i<Nstable_particle; i++)
+      for(int j=0; j<partList.size(); j++)
+         if(partList[j]->getMonval() == stable_particle_monval[i])
+         {
+            partList[j]->setStable(1);
+            partList[j]->setMu(mu_stable[i]);
+            break;
+         }
+
+   for(int i=0; i < partList.size() ; i++)
+   {
+      double mu_temp = 0.0;
+      if(partList[i]->getStable() == 0)
+      {
+         for(int j=0; j < partList[i]->getNdecayChannel(); j++)
+         {
+            for(int k=0; k < abs(partList[i]->getdecaysNpart(j)); k++)
+            {
+               for(int l=0; l < partList.size(); l++)
+               {
+                  if(partList[i]->getdecays_part(j,k) == partList[l]->getMonval())
+                  {
+                     mu_temp += partList[i]->getdecays_branchratio(j)*partList[l]->getMu();
+                     break;
+                  }
+                  if(l == (partList.size() - 1))
+                     cout<<"warning: can not find particle " <<  partList[i]->getdecays_part(j,k) << endl;
+               }
+            }
+         }
+         partList[i]->setMu(mu_temp); 
+      }
+   }
+
+   //for (int i = 0; i < partList.size(); i++)
+   //   cout << partList[i]->getMonval() << "   " << partList[i]->getMu() << endl;
+
+   delete [] stable_particle_monval;
+   delete [] mu_stable;
+}
+
 int particleList::get_particle_idx(int particle_monval)
 // return the idx in particleList for given particle Monte-Carlo number
 {

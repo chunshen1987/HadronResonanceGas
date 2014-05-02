@@ -55,7 +55,14 @@ class particle
        double getMu() {return(mu);};
        int getSign() {return(sign);};
        double getParticleYield() {return(yield);};
-
+       int getNdecays() {return(decays);};
+       int getNdecayChannel() {return(NdecayChannel);};
+       int getdecaysNpart(int i) {return(decays_Npart[i]);};
+       int getdecays_part(int i, int j) {return(decays_part[i][j]);};
+       double getdecays_branchratio(int i) {return(decays_branchratio[i]);};
+       int getStable() {return(stable);};
+       void setStable(int s) {stable = s;};
+       void setMu(double chem) {mu = chem;};
 };
 
 #endif
