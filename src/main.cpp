@@ -35,7 +35,6 @@ int main()
    Chemical_potential chem_table;
    chem_table.readin_chempotential_table("chemical_potential_tb/s95p/s95p-PCE165-v0/s95p-v0-PCE165_chemvsT.dat");
    hadronList.output_particle_chemical_potentials(&chem_table);
-   cout << "done!" << endl;
 
    hadronList.calculateSystemEOS();
    hadronList.calculateSystemEOS(0.02);
