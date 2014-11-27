@@ -18,8 +18,8 @@ class Chemical_potential
       void readin_chempotential_table(string filename);
       void Set_chemical_potential();
 
-      double get_Tblength() {return(Tb_length);};
-      double get_Nstable() {return(Nstable);};
+      int get_Tblength() {return(Tb_length);};
+      int get_Nstable() {return(Nstable);};
       double get_T(int i) {return(T[i]);};
 
       void output_stable_mu(double Temperature, double* mu); 

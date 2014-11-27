@@ -194,7 +194,7 @@ void particleList::calculate_particle_chemical_potential(double Temperature, Che
                      mu_temp += partList[i]->getdecays_branchratio(j)*partList[l]->getMu();
                      break;
                   }
-                  if(l == (partList.size() - 1))
+                  if(l == (partList.size() - 1) && partList[i]->getdecays_part(j,k) != 22)
                      cout<<"warning: can not find particle " <<  partList[i]->getdecays_part(j,k) << endl;
                }
             }
