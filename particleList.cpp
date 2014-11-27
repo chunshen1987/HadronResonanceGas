@@ -99,12 +99,31 @@ void particleList::readParticlelistTable(string tableName)
 void particleList::output_particle_chemical_potentials(Chemical_potential* mu_tb)
 {
    ofstream particle_mu_table("chemical_potentials.dat");
+   //output names
+   particle_mu_table << scientific << setw(18) << setprecision(8)
+                     << 0.0 << "    ";
+   for(int i = 0; i < partList.size(); i++)
+   {
+      particle_mu_table << scientific << setw(18) << setprecision(8)
+                        << partList[i]->getName() << "    ";
+   }
+   particle_mu_table << endl;
+   //output mass
    particle_mu_table << scientific << setw(18) << setprecision(8)
                      << 0.0 << "    ";
    for(int i = 0; i < partList.size(); i++)
    {
       particle_mu_table << scientific << setw(18) << setprecision(8)
                         << partList[i]->getMass() << "    ";
+   }
+   particle_mu_table << endl;
+   //output baryon number
+   particle_mu_table << scientific << setw(18) << setprecision(8)
+                     << 0.0 << "    ";
+   for(int i = 0; i < partList.size(); i++)
+   {
+      particle_mu_table << scientific << setw(18) << setprecision(8)
+                        << partList[i]->getBaryon() << "    ";
    }
    particle_mu_table << endl;
 
