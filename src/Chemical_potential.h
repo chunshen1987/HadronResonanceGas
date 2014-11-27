@@ -16,7 +16,6 @@ class Chemical_potential
       ~Chemical_potential();
 
       void readin_chempotential_table(string filename);
-      void Set_chemical_potential();
 
       int get_Tblength() {return(Tb_length);};
       int get_Nstable() {return(Nstable);};
