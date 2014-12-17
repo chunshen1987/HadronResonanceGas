@@ -31,6 +31,7 @@ class particle
        double* decays_branchratio;  // branching ratio of each decay channel
        int* decays_Npart;           // number of daughter particles of each decay channel
        int** decays_part;           // identity of daughter particles
+       double* decay_probability;   // array to record particle decay probability for the particle decays into stable ones
 
        int channelIdx;
 
@@ -40,6 +41,7 @@ class particle
        ~particle();
        
        void addResonancedecays(double branchratio, int Npart, int* decays_part);
+       void create_decay_probability_array(int dimension) {decay_probability = new double [dimension];};
        void calculateChemicalpotential(double mu_B, double mu_S);
        void calculateParticleYield(double Temperature);
        double calculateEnergydensity(double Temperature);
@@ -60,9 +62,16 @@ class particle
        int getdecaysNpart(int i) {return(decays_Npart[i]);};
        int getdecays_part(int i, int j) {return(decays_part[i][j]);};
        double getdecays_branchratio(int i) {return(decays_branchratio[i]);};
+       double getdecay_probability(int i) {return(decay_probability[i]);};
        int getStable() {return(stable);};
        void setStable(int s) {stable = s;};
        void setMu(double chem) {mu = chem;};
+       void set_decay_probability(int i, double val) {decay_probability[i] = val;};
+       double calculate_dsdmu(double Temperature);
+       double calculate_deoverTdmu(double Temperature);
+       double calculate_dPoverTdmu(double Temperature);
+       double calculate_dndmu(double Temperature);
+
 };
 
 #endif

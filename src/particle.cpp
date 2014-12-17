@@ -134,3 +134,61 @@ double particle::calculateEntropydensity(double Temperature)
    sd = (ed + pressure - mu*yield)/Temperature;    // unit : 1/fm^3
    return(sd);
 }
+
+double particle::calculate_dndmu(double Temperature)
+// calculate the first order derivative dn/dmu [1/GeV]
+{
+   double results;
+   results = 0.0;
+   double prefactor = gspin/(2*M_PI*M_PI)*mass;
+   for(int j=0; j<trunOrder; j++)
+   {
+      double arg = (j+1)*mass/Temperature;
+      double lambda = exp(mu/Temperature);
+      results += pow((-1.0)*sign, j)*pow(lambda, j+1)*gsl_sf_bessel_Kn(2, arg);
+   }
+   results = results*prefactor;
+   return(results);
+}
+
+double particle::calculate_dPoverTdmu(double Temperature)
+// calculate the first order derivative d(P/T)/dmu [1/(GeV fm^3)]
+{
+   double results;
+   results = 0.0;
+   double prefactor = gspin/(2*M_PI*M_PI)*mass*mass;
+   for(int j=0; j<trunOrder; j++)
+   {
+      double arg = (j+1)*mass/Temperature;
+      double lambda = exp(mu/Temperature);
+      results += pow((-1.0)*sign, j)*pow(lambda, j+1)/(j+1)*gsl_sf_bessel_Kn(2, arg);
+   }
+   results = results*prefactor/pow(hbarC, 3);
+   return(results);
+}
+
+double particle::calculate_deoverTdmu(double Temperature)
+// calculate the first order derivative d(e/T)/dmu [1/(GeV fm^3)]
+{
+   double results;
+   results = 0.0;
+   double prefactor = gspin/(2*M_PI*M_PI)*pow(mass, 4);
+   for(int j=0; j<trunOrder; j++)
+   {
+      double arg = (j+1)*mass/Temperature;
+      double lambda = exp(mu/Temperature);
+      results += pow((-1.0)*sign, j)*pow(lambda, j+1)*(j+1)*(3*gsl_sf_bessel_Kn(2, arg)/(arg*arg) + gsl_sf_bessel_Kn(1, arg)/arg);
+   }
+   results = results*prefactor/pow(hbarC, 3);
+   return(results);
+}
+
+double particle::calculate_dsdmu(double Temperature)
+// calculate the first order derivative ds/dmu [1/(GeV fm^3)]
+{
+   double dPoverTdmu = calculate_dPoverTdmu(Temperature);
+   double deoverTdmu = calculate_deoverTdmu(Temperature);
+   double dndmu = calculate_dndmu(Temperature);
+   double dsdmu = dPoverTdmu - yield - mu*dndmu + deoverTdmu;
+   return(dsdmu);
+}

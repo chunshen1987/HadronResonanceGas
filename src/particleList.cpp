@@ -19,7 +19,7 @@ particleList::particleList(string particleTableName)
 
 particleList::~particleList()
 {
-
+   partList.clear();
 }
 
 void particleList::readParticlelistTable(string tableName)
@@ -96,6 +96,52 @@ void particleList::readParticlelistTable(string tableName)
    return;
 }
 
+void particleList::calculate_particle_decay_probability(Chemical_potential* mu_tb)
+{
+   int Nstable = mu_tb->get_Nstable();
+   for(int i = 0; i < partList.size(); i++)
+   {
+       int skip_flag = 0;
+       partList[i]->create_decay_probability_array(Nstable);
+       for(int j = 0; j < Nstable; j++)
+          partList[i]->set_decay_probability(j, 0.0);
+       for(int j = 0; j < Nstable; j++)
+       {
+          if(partList[i]->getMonval() == mu_tb->get_stable_particle_monval(j))
+          {
+              partList[i]->setStable(1);
+              partList[i]->set_decay_probability(j, 1.0);
+              skip_flag = 1;
+              break;
+          }
+       }
+       if(skip_flag == 0)  // unstable resonances
+       {
+          double* temp = new double [Nstable];
+          for(int j = 0; j < Nstable; j++)
+              temp[j] = 0.0;
+          for(int j=0; j < partList[i]->getNdecayChannel(); j++)
+          {
+             for(int k=0; k < abs(partList[i]->getdecaysNpart(j)); k++)
+             {
+                for(int l=0; l < partList.size(); l++)
+                {
+                   if(partList[i]->getdecays_part(j,k) == partList[l]->getMonval())
+                   {
+                      for(int m = 0; m < Nstable; m++)
+                         temp[m] += partList[i]->getdecays_branchratio(j)*partList[l]->getdecay_probability(m);
+                   }
+
+                }
+             }
+          }
+          for(int j = 0; j < Nstable; j++)
+              partList[i]->set_decay_probability(j, temp[j]);
+          delete [] temp;
+       }
+   }
+}
+
 void particleList::output_particle_chemical_potentials(Chemical_potential* mu_tb)
 {
    ofstream particle_mu_table("chemical_potentials.dat");
@@ -135,6 +181,7 @@ void particleList::output_particle_chemical_potentials(Chemical_potential* mu_tb
    {
       double T_local = Ti + i*dT;
       calculate_particle_chemical_potential(T_local, mu_tb);
+      //calculate_particle_chemical_potential2(T_local, mu_tb);
       particle_mu_table << scientific << setw(18) << setprecision(8)
                         << T_local << "    " ;
       for (int j = 0; j < partList.size(); j++)
@@ -143,6 +190,21 @@ void particleList::output_particle_chemical_potentials(Chemical_potential* mu_tb
       particle_mu_table << endl;
    }
    particle_mu_table.close();
+}
+
+void particleList::calculate_particle_chemical_potential2(double Temperature, Chemical_potential* mu_tb)
+{
+   int Nstable = mu_tb->get_Nstable();
+   double *mu_stable = new double [Nstable];
+   mu_tb->output_stable_mu(Temperature, mu_stable);
+   for(int i=0; i < partList.size() ; i++)
+   {
+      double mu_temp = 0.0;
+      for(int j = 0; j < Nstable; j++)
+          mu_temp += partList[i]->getdecay_probability(j)*mu_stable[j];
+      partList[i]->setMu(mu_temp); 
+   }
+   delete [] mu_stable;
 }
 
 void particleList::calculate_particle_chemical_potential(double Temperature, Chemical_potential* mu_tb)
@@ -238,7 +300,17 @@ void particleList::calculate_particle_yield(double Temperature, double mu_B, dou
    return;
 }
 
-void particleList::calculateSystemenergyDensity(double Temperature, double mu_B, double mu_S)
+void particleList::calculateSystemnetbaryonDensity(double Temperature)
+{
+   double result = 0.0;
+   for(int i = 0; i < partList.size(); i++)
+      result += partList[i]->getBaryon()*partList[i]->getParticleYield();
+   net_baryon_density = result;
+   return;
+}
+
+
+void particleList::calculateSystemenergyDensity(double Temperature)
 //calculate the energy density of the system at given T and mu
 {
    double result = 0.0e0;
@@ -248,7 +320,7 @@ void particleList::calculateSystemenergyDensity(double Temperature, double mu_B,
    return;
 }
 
-void particleList::calculateSystemPressure(double Temperature, double mu_B, double mu_S)
+void particleList::calculateSystemPressure(double Temperature)
 //calculate the pressure of the system at given T and mu
 {
    double result = 0.0e0;
@@ -258,7 +330,7 @@ void particleList::calculateSystemPressure(double Temperature, double mu_B, doub
    return;
 }
 
-void particleList::calculateSystementropyDensity(double Temperature, double mu_B, double mu_S)
+void particleList::calculateSystementropyDensity(double Temperature)
 //calculate the entropy density of the system at given T and mu
 {
    double result = 0.0e0;
@@ -280,17 +352,20 @@ void particleList::calculateSystemEOS(double mu_B, double mu_S)
    double* ed_ptr = new double [nT];
    double* sd_ptr = new double [nT];
    double* pressure_ptr = new double [nT];
+   double* net_baryon_ptr = new double [nT];
    double* cs2_ptr = new double [nT];
    for(int i = 0; i < nT; i++)
    {
       temp_ptr[i] = T_i + i*dT;
       calculate_particle_yield(temp_ptr[i], mu_B, mu_S);
+      calculateSystemnetbaryonDensity(temp_ptr[i]);
       calculateSystemenergyDensity(temp_ptr[i]);
       calculateSystemPressure(temp_ptr[i]);
       calculateSystementropyDensity(temp_ptr[i]);
       ed_ptr[i] = edSystem;
       sd_ptr[i] = sdSystem;
       pressure_ptr[i] = pressureSys;
+      net_baryon_ptr[i] = net_baryon_density;
    }
    //calculate speed of sound cs^2 = dP/de
    for(int i = 0; i < nT - 1; i++)
@@ -303,14 +378,16 @@ void particleList::calculateSystemEOS(double mu_B, double mu_S)
    ofstream output(EOSfilename.str().c_str());
    for(int i = 0; i < nT; i++)
       output << scientific << setw(20) << setprecision(8)
-             << temp_ptr[i] << "   "  << ed_ptr[i] 
-             << "   " << sd_ptr[i] << "   " << pressure_ptr[i] 
-             << "   " << cs2_ptr[i] << endl;
+             << net_baryon_ptr[i] << "  "
+             << temp_ptr[i] << "   "  << ed_ptr[i] << "   " 
+             << sd_ptr[i] << "   " << pressure_ptr[i] << "   " 
+             << cs2_ptr[i] << endl;
    output.close();
    delete [] temp_ptr;
    delete [] ed_ptr;
    delete [] sd_ptr;
    delete [] pressure_ptr;
+   delete [] net_baryon_ptr;
    delete [] cs2_ptr;
    return;
 }
