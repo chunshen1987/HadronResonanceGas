@@ -32,6 +32,7 @@ class particleList
        int get_particle_idx(int particle_monval);
        int getParticlelistSize() {return(partList.size());};
        void calculate_particle_chemical_potential(double Temperature, Chemical_potential* mu_tb);
+       void calculateSystemEOS_and_output_in_2D();
        void output_particle_chemical_potentials(Chemical_potential* mu_tb);
 };
 
