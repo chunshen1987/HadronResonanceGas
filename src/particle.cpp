@@ -6,7 +6,10 @@
 #include "particle.h"
 using namespace std;
 
-particle::particle(int monval_in, string name_in, double mass_in, double width_in, int gspin_in, int baryon_in, int strange_in, int charm_in, int bottom_in, int gisospin_in, int charge_in, int NdecayChannel_in)
+particle::particle(int monval_in, string name_in, double mass_in, 
+                   double width_in, int gspin_in, int baryon_in, 
+                   int strange_in, int charm_in, int bottom_in, 
+                   int gisospin_in, int charge_in, int NdecayChannel_in)
 {
     hbarC = 0.19733;
     trunOrder = 10;
@@ -46,12 +49,14 @@ particle::~particle()
     delete [] decays_part;
 }
 
-void particle::addResonancedecays(double branchratio, int Npart, int* decayChannelparts)
+void particle::addResonancedecays(double branchratio, int Npart, 
+                                  int* decayChannelparts)
 //add resonance decay channel for particle
 {
     if(channelIdx > NdecayChannel-1)
     {
-        cout << "Warning: channelidx exceed number of decay channels! Please check" << endl;
+        cout << "Warning: channelidx exceed number of decay channels! "
+             << "Please check" << endl;
         exit(1);
     }
     decays_branchratio[channelIdx] = branchratio;
@@ -89,7 +94,8 @@ void particle::calculateParticleYield(double Temperature)
    {
       double arg = (j+1)*mass/Temperature;
       double lambda = exp(mu/Temperature);
-      results += pow((-1.0)*sign, j)/(j+1)*pow(lambda, j+1)*gsl_sf_bessel_Kn(2, arg);
+      results += (pow((-1.0)*sign, j)/(j+1)*pow(lambda, j+1)
+                  *gsl_sf_bessel_Kn(2, arg));
    }
    results = results*prefactor;
    yield = results;
@@ -105,7 +111,9 @@ double particle::calculateEnergydensity(double Temperature)
    {
       double arg = (j+1)*mass/Temperature;
       double lambda = exp(mu/Temperature);
-      results += pow((-1.0)*sign, j)*pow(lambda, j+1)*(3.*gsl_sf_bessel_Kn(2, arg)/(arg*arg) + gsl_sf_bessel_Kn(1, arg)/arg);
+      results += (pow((-1.0)*sign, j)*pow(lambda, j+1)
+                  *(3.*gsl_sf_bessel_Kn(2, arg)/(arg*arg) 
+                    + gsl_sf_bessel_Kn(1, arg)/arg));
    }
    results = results*prefactor;
    ed = results/pow(hbarC,3);    // unit: GeV/fm^3
@@ -121,7 +129,8 @@ double particle::calculatePressure(double Temperature)
    {
       double arg = (j+1)*mass/Temperature;
       double lambda = exp(mu/Temperature);
-      results += pow((-1.0)*sign, j)/pow(j+1.,2)*pow(lambda, j+1)*gsl_sf_bessel_Kn(2, arg);
+      results += (pow((-1.0)*sign, j)/pow(j+1.,2)
+                      *pow(lambda, j+1)*gsl_sf_bessel_Kn(2, arg));
    }
    results = results*prefactor;
    pressure = results/pow(hbarC, 3);    // unit : GeV/fm^3
@@ -129,7 +138,8 @@ double particle::calculatePressure(double Temperature)
 }
 
 double particle::calculateEntropydensity(double Temperature)
-// calculate the entropy density using the first law of thermodynamics at give T and mu
+// calculate the entropy density using the first law of thermodynamics 
+// at give T and mu
 {
    sd = (ed + pressure - mu*yield)/Temperature;    // unit : 1/fm^3
    return(sd);
@@ -161,7 +171,8 @@ double particle::calculate_dPoverTdmu(double Temperature)
    {
       double arg = (j+1)*mass/Temperature;
       double lambda = exp(mu/Temperature);
-      results += pow((-1.0)*sign, j)*pow(lambda, j+1)/(j+1)*gsl_sf_bessel_Kn(2, arg);
+      results += (pow((-1.0)*sign, j)*pow(lambda, j+1)/(j+1)
+                      *gsl_sf_bessel_Kn(2, arg));
    }
    results = results*prefactor/pow(hbarC, 3);
    return(results);
@@ -177,7 +188,9 @@ double particle::calculate_deoverTdmu(double Temperature)
    {
       double arg = (j+1)*mass/Temperature;
       double lambda = exp(mu/Temperature);
-      results += pow((-1.0)*sign, j)*pow(lambda, j+1)*(j+1)*(3*gsl_sf_bessel_Kn(2, arg)/(arg*arg) + gsl_sf_bessel_Kn(1, arg)/arg);
+      results += (pow((-1.0)*sign, j)*pow(lambda, j+1)*(j+1)
+                  *(3*gsl_sf_bessel_Kn(2, arg)/(arg*arg) 
+                          + gsl_sf_bessel_Kn(1, arg)/arg));
    }
    results = results*prefactor/pow(hbarC, 3);
    return(results);

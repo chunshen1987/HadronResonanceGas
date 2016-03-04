@@ -40,7 +40,8 @@ void particleList::readParticlelistTable(string tableName)
    while(1)
    {
       resofile >> monval;
-      if(resofile.eof()) break;
+      if(resofile.eof()) 
+          break;
       resofile >> name;
       resofile >> mass;
       resofile >> width;
@@ -52,12 +53,17 @@ void particleList::readParticlelistTable(string tableName)
       resofile >> gisospin;
       resofile >> charge;
       resofile >> decays;
-      partList.push_back(new particle(monval, name, mass, width, gspin, baryon, strange, charm, bottom, gisospin, charge, decays));
+      partList.push_back(
+          new particle(monval, name, mass, width, gspin, baryon, strange, 
+                       charm, bottom, gisospin, charge, decays));
       if(baryon == 1)
       {
          ostringstream antiname;
          antiname << "Anti-" << name;
-         partList.push_back(new particle(-monval, antiname.str(), mass, width, gspin, -baryon, -strange, -charm, -bottom, gisospin, -charge, decays));
+         partList.push_back(
+             new particle(-monval, antiname.str(), mass, width, gspin, 
+                          -baryon, -strange, -charm, -bottom, gisospin, 
+                          -charge, decays));
       }
       for (int j = 0; j < decays; j++)
       {
@@ -75,16 +81,19 @@ void particleList::readParticlelistTable(string tableName)
             tempptr[ipart] = decayPart[ipart];
 
          if(baryon == 0)
-            partList.back()->addResonancedecays(decayBranchratio, decayNpart, tempptr);
+            partList.back()->addResonancedecays(decayBranchratio, decayNpart, 
+                                                tempptr);
          else
          {
-            partList.at(partList.size()-2)->addResonancedecays(decayBranchratio, decayNpart, tempptr);
+            partList.at(partList.size()-2)->addResonancedecays(
+                            decayBranchratio, decayNpart, tempptr);
             for(int ipart = 0; ipart < decayNpart; ipart++)
             {
                int particleId = get_particle_idx(tempptr[ipart]);
                tempptr[ipart] = partList[particleId]->getAntiparticleMonval();
             }
-            partList.back()->addResonancedecays(decayBranchratio, decayNpart, tempptr);
+            partList.back()->addResonancedecays(decayBranchratio, decayNpart, 
+                                                tempptr);
          }
          delete [] tempptr;
       }
@@ -96,7 +105,8 @@ void particleList::readParticlelistTable(string tableName)
    return;
 }
 
-void particleList::calculate_particle_decay_probability(Chemical_potential* mu_tb)
+void particleList::calculate_particle_decay_probability(
+                Chemical_potential* mu_tb)
 {
    int Nstable = mu_tb->get_Nstable();
    for(int i = 0; i < partList.size(); i++)
@@ -126,10 +136,13 @@ void particleList::calculate_particle_decay_probability(Chemical_potential* mu_t
              {
                 for(int l=0; l < partList.size(); l++)
                 {
-                   if(partList[i]->getdecays_part(j,k) == partList[l]->getMonval())
+                   if(partList[i]->getdecays_part(j,k) 
+                                   == partList[l]->getMonval())
                    {
                       for(int m = 0; m < Nstable; m++)
-                         temp[m] += partList[i]->getdecays_branchratio(j)*partList[l]->getdecay_probability(m);
+                         temp[m] += (
+                             partList[i]->getdecays_branchratio(j)
+                             *partList[l]->getdecay_probability(m));
                    }
 
                 }
@@ -142,7 +155,8 @@ void particleList::calculate_particle_decay_probability(Chemical_potential* mu_t
    }
 }
 
-void particleList::output_particle_chemical_potentials(Chemical_potential* mu_tb)
+void particleList::output_particle_chemical_potentials(
+                                                     Chemical_potential* mu_tb)
 {
    ofstream particle_mu_table("chemical_potentials.dat");
    //output names
@@ -192,7 +206,8 @@ void particleList::output_particle_chemical_potentials(Chemical_potential* mu_tb
    particle_mu_table.close();
 }
 
-void particleList::calculate_particle_chemical_potential2(double Temperature, Chemical_potential* mu_tb)
+void particleList::calculate_particle_chemical_potential2(
+                                 double Temperature, Chemical_potential* mu_tb)
 {
    int Nstable = mu_tb->get_Nstable();
    double *mu_stable = new double [Nstable];
@@ -207,7 +222,8 @@ void particleList::calculate_particle_chemical_potential2(double Temperature, Ch
    delete [] mu_stable;
 }
 
-void particleList::calculate_particle_chemical_potential(double Temperature, Chemical_potential* mu_tb)
+void particleList::calculate_particle_chemical_potential(
+                                 double Temperature, Chemical_potential* mu_tb)
 {
    int N_mu = mu_tb->get_Nstable();
    double *mu_stable = new double [N_mu];
@@ -220,7 +236,8 @@ void particleList::calculate_particle_chemical_potential(double Temperature, Che
    particletable >> Nstable_particle;
    if(N_mu != Nstable_particle)
    {
-      cout << "chemical potential table is not compatible with EOS_particletable.dat" << endl;
+      cout << "chemical potential table is not compatible with "
+           << "EOS_particletable.dat" << endl;
       exit(1);
    }
    double *stable_particle_monval = new double [Nstable_particle];
@@ -251,22 +268,24 @@ void particleList::calculate_particle_chemical_potential(double Temperature, Che
             {
                for(int l=0; l < partList.size(); l++)
                {
-                  if(partList[i]->getdecays_part(j,k) == partList[l]->getMonval())
+                  if(partList[i]->getdecays_part(j,k) 
+                                  == partList[l]->getMonval())
                   {
-                     mu_temp += partList[i]->getdecays_branchratio(j)*partList[l]->getMu();
+                     mu_temp += (
+                         partList[i]->getdecays_branchratio(j)
+                         *partList[l]->getMu());
                      break;
                   }
-                  if(l == (partList.size() - 1) && partList[i]->getdecays_part(j,k) != 22)
-                     cout<<"warning: can not find particle " <<  partList[i]->getdecays_part(j,k) << endl;
+                  if(l == (partList.size() - 1) 
+                                  && partList[i]->getdecays_part(j,k) != 22)
+                     cout << "warning: can not find particle " 
+                          <<  partList[i]->getdecays_part(j,k) << endl;
                }
             }
          }
          partList[i]->setMu(mu_temp); 
       }
    }
-
-   //for (int i = 0; i < partList.size(); i++)
-   //   cout << partList[i]->getMonval() << "   " << partList[i]->getMu() << endl;
 
    delete [] stable_particle_monval;
    delete [] mu_stable;
@@ -291,7 +310,8 @@ void particleList::calculate_particle_mu(double mu_B, double mu_S)
    return;
 }
 
-void particleList::calculate_particle_yield(double Temperature, double mu_B, double mu_S)
+void particleList::calculate_particle_yield(double Temperature, 
+                                            double mu_B, double mu_S)
 //calculate particle yield
 {
    calculate_particle_mu(mu_B, mu_S);
@@ -385,7 +405,8 @@ void particleList::calculateSystemEOS_and_output_in_2D()
    for(int i = 0; i < n_mu_B; i++)
    {
        double local_mu_B = mu_B_i + i*dmu_B;
-       cout << " calculating EOS for mu_B = " << local_mu_B << " GeV..." << endl;
+       cout << " calculating EOS for mu_B = " << local_mu_B << " GeV..." 
+            << endl;
        for(int j = 0; j < nT; j++)
        {
            muB_ptr[i][j] = local_mu_B;
@@ -411,20 +432,31 @@ void particleList::calculateSystemEOS_and_output_in_2D()
        {
            double dPde, dPdrho_B;
            if (j == 0)
-               dPde = (pressure_ptr[i][1] - pressure_ptr[i][0])/(ed_ptr[i][1] - ed_ptr[i][0] + 1e-15);
+               dPde = ((pressure_ptr[i][1] - pressure_ptr[i][0])
+                        /(ed_ptr[i][1] - ed_ptr[i][0] + 1e-15));
            else if (j == nT - 1)
-               dPde = (pressure_ptr[i][nT-1] - pressure_ptr[i][nT-2])/(ed_ptr[i][nT-1] - ed_ptr[i][nT-2] + 1e-15);
+               dPde = ((pressure_ptr[i][nT-1] - pressure_ptr[i][nT-2])
+                        /(ed_ptr[i][nT-1] - ed_ptr[i][nT-2] + 1e-15));
            else
-               dPde = (pressure_ptr[i][j+1] - pressure_ptr[i][j-1])/(ed_ptr[i][j+1] - ed_ptr[i][j-1] + 1e-15);
+               dPde = ((pressure_ptr[i][j+1] - pressure_ptr[i][j-1])
+                        /(ed_ptr[i][j+1] - ed_ptr[i][j-1] + 1e-15));
 
            if (i == 0)
-               dPdrho_B = (pressure_ptr[1][j] - pressure_ptr[0][j])/(net_baryon_ptr[1][j] - net_baryon_ptr[0][j] + 1e-15);
+               dPdrho_B = ((pressure_ptr[1][j] - pressure_ptr[0][j])
+                            /(net_baryon_ptr[1][j] - net_baryon_ptr[0][j] 
+                                    + 1e-15));
            else if (i == n_mu_B - 1)
-               dPdrho_B = (pressure_ptr[n_mu_B-1][j] - pressure_ptr[n_mu_B-2][j])/(net_baryon_ptr[n_mu_B-1][j] - net_baryon_ptr[n_mu_B-2][j] + 1e-15);
+               dPdrho_B = (
+                   (pressure_ptr[n_mu_B-1][j] - pressure_ptr[n_mu_B-2][j])
+                   /(net_baryon_ptr[n_mu_B-1][j] - net_baryon_ptr[n_mu_B-2][j] 
+                           + 1e-15));
            else
-               dPdrho_B = (pressure_ptr[i+1][j] - pressure_ptr[i-1][j])/(net_baryon_ptr[i+1][j] - net_baryon_ptr[i-1][j] + 1e-15);
+               dPdrho_B = ((pressure_ptr[i+1][j] - pressure_ptr[i-1][j])
+                           /(net_baryon_ptr[i+1][j] - net_baryon_ptr[i-1][j] 
+                                   + 1e-15));
 
-           double v_sound_sq = dPde + net_baryon_ptr[i][j]/(ed_ptr[i][j] + pressure_ptr[i][j])*dPdrho_B;
+           double v_sound_sq = (dPde + net_baryon_ptr[i][j]/(ed_ptr[i][j] 
+                                   + pressure_ptr[i][j])*dPdrho_B);
            cs2_ptr[i][j] = v_sound_sq;
        }
    }
@@ -467,7 +499,8 @@ void particleList::calculateSystemEOS_and_output_in_2D()
 void particleList::calculateSystemEOS(double mu_B, double mu_S)
 //calculate the EOS of given system, e,p,s as functions of T at given mu_B and mu_S
 { 
-   cout << "calculate the EOS of the system with muB = " << mu_B << " GeV and mu_S = " << mu_S << " GeV .... " << endl;
+   cout << "calculate the EOS of the system with muB = " << mu_B 
+        << " GeV and mu_S = " << mu_S << " GeV .... " << endl;
    int nT = 200;
    double T_i = 0.01;        // unit: (GeV)
    double T_f = 0.2;          // unit: (GeV)
@@ -493,7 +526,8 @@ void particleList::calculateSystemEOS(double mu_B, double mu_S)
    }
    //calculate speed of sound cs^2 = dP/de
    for(int i = 0; i < nT - 1; i++)
-      cs2_ptr[i] = (pressure_ptr[i+1] - pressure_ptr[i])/(ed_ptr[i+1] - ed_ptr[i]+1e-30);
+      cs2_ptr[i] = ((pressure_ptr[i+1] - pressure_ptr[i])
+                    /(ed_ptr[i+1] - ed_ptr[i] + 1e-30));
    cs2_ptr[nT-1] = cs2_ptr[nT-2];
 
    //output EOS table

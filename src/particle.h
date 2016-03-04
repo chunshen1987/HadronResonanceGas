@@ -36,18 +36,27 @@ class particle
        int channelIdx;
 
        int trunOrder;               // truncated order in the summation
+
     public:
-       particle(int monval_in, string name_in, double mass_in, double width_in, int gspin_in, int baryon_in, int strange_in, int charm_in, int bottom_in, int gisospin_in, int charge_in, int NdecayChannel_in);
+       particle(int monval_in, string name_in, double mass_in, double width_in, 
+                int gspin_in, int baryon_in, int strange_in, int charm_in, 
+                int bottom_in, int gisospin_in, int charge_in, 
+                int NdecayChannel_in);
        ~particle();
        
-       void addResonancedecays(double branchratio, int Npart, int* decays_part);
-       void create_decay_probability_array(int dimension) {decay_probability = new double [dimension];};
+       void addResonancedecays(double branchratio, int Npart, 
+                               int* decays_part);
+       void create_decay_probability_array(int dimension)
+           {decay_probability = new double [dimension];};
+
        void calculateChemicalpotential(double mu_B, double mu_S);
        void calculateParticleYield(double Temperature);
        double calculateEnergydensity(double Temperature);
        double calculatePressure(double Temperature);
        double calculateEntropydensity(double Temperature);
+
        int getAntiparticleMonval();
+
        int getMonval() {return(monval);};
        string getName() {return(name);};
        double getMass() {return(mass);};
@@ -66,7 +75,8 @@ class particle
        int getStable() {return(stable);};
        void setStable(int s) {stable = s;};
        void setMu(double chem) {mu = chem;};
-       void set_decay_probability(int i, double val) {decay_probability[i] = val;};
+       void set_decay_probability(int i, double val) 
+           {decay_probability[i] = val;};
        double calculate_dsdmu(double Temperature);
        double calculate_deoverTdmu(double Temperature);
        double calculate_dPoverTdmu(double Temperature);

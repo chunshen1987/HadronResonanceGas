@@ -24,7 +24,8 @@ class Chemical_potential
 
       int get_Tblength() {return(Tb_length);};
       int get_Nstable() {return(Nstable);};
-      int get_stable_particle_monval(int i) {return(stable_particle_monval_list[i]);};
+      int get_stable_particle_monval(int i) 
+          {return(stable_particle_monval_list[i]);};
       double get_T(int i) {return(T[i]);};
 
       void get_stable_mu_table(int iT, double* mu);
