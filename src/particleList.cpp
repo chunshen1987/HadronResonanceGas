@@ -164,7 +164,7 @@ void particleList::calculate_particle_decay_probability() {
                             break;
                         }
                         if (l > i) {
-                                cout << partList[l]->getMonval()
+                                cout << "decay: " << partList[l]->getMonval()
                                      << "   " << partList[i]->getMonval()
                                      << "   "
                                      << partList[i]->getdecays_part(j, k)
