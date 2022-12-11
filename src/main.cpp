@@ -25,7 +25,7 @@ int main() {
     sw.tic();
 
     particleList hadronList("EOS/pdg.dat");
-    hadronList.calculate_particle_yield(0.125, 0.3005, 0.0);
+    hadronList.calculateSystemEOS(0., 0.);
 
     sw.toc();
     std::cout << "Program totally finished in " << sw.takeTime() << " sec."

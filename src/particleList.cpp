@@ -189,14 +189,14 @@ void particleList::calculate_particle_decays() {
         }
         stable_particle_list[j]->set_particle_stable_yield(stable_yield);
     }
-    for (int i = 0; i < stable_particle_list.size(); i++) {
-        cout << "stable particle name: " << stable_particle_list[i]->getName()
-             << ", yield: "
-             << stable_particle_list[i]->get_particle_stable_yield()
-             << ", thermal yield:" 
-             << stable_particle_list[i]-> getParticleYield()
-             << endl;
-    }
+    //for (int i = 0; i < stable_particle_list.size(); i++) {
+    //    cout << "stable particle name: " << stable_particle_list[i]->getName()
+    //         << ", yield: "
+    //         << stable_particle_list[i]->get_particle_stable_yield()
+    //         << ", thermal yield:" 
+    //         << stable_particle_list[i]-> getParticleYield()
+    //         << endl;
+    //}
 }
 
 void particleList::output_particle_chemical_potentials(
@@ -511,8 +511,8 @@ void particleList::calculateSystemEOS(double mu_B, double mu_S) {
 // at given mu_B and mu_S
     cout << "calculate the EOS of the system with muB = " << mu_B
          << " GeV and mu_S = " << mu_S << " GeV .... " << endl;
-    int nT = 200;
-    double T_i = 0.01;        // unit: (GeV)
+    int nT = 191;
+    double T_i = 0.01;         // unit: (GeV)
     double T_f = 0.2;          // unit: (GeV)
     double dT = (T_f - T_i)/(nT - 1);
     double* temp_ptr = new double[nT];
@@ -543,10 +543,12 @@ void particleList::calculateSystemEOS(double mu_B, double mu_S) {
     ostringstream EOSfilename;
     EOSfilename << "./EOS_muB_" << mu_B << "_muS_" << mu_S << ".dat";
     ofstream output(EOSfilename.str().c_str());
+    output << "# T [GeV]  e [GeV/fm^3]  nB [1/fm^3]  s [1/fm^3]  P [GeV/fm^3]"
+           << "  cs^2" << endl;
     for (int i = 0; i < nT; i++)
         output << scientific << setw(20) << setprecision(8)
-               << net_baryon_ptr[i] << "  "
-               << temp_ptr[i] << "   "  << ed_ptr[i] << "   "
+               << temp_ptr[i] << "   "
+               << ed_ptr[i] << "   " << net_baryon_ptr[i] << "  "
                << sd_ptr[i] << "   " << pressure_ptr[i] << "   "
                << cs2_ptr[i] << endl;
     output.close();

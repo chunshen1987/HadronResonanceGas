@@ -16,7 +16,7 @@ particle::particle(int monval_in, string name_in, double mass_in,
                    int strange_in, int charm_in, int bottom_in,
                    int gisospin_in, int charge_in, int NdecayChannel_in) {
     hbarC = 0.19733;
-    trunOrder = 10;
+    trunOrder = 5;
     monval = monval_in;
     name = name_in;
     mass = mass_in;
@@ -93,14 +93,14 @@ void particle::calculateChemicalpotential(double mu_B, double mu_S) {
 
 void particle::calculateParticleYield(double Temperature, double mu_B,
                                       double mu_S) {
-// this function compute particle thermal yield at given T, mu
-    int sf_expint_truncate_order = trunOrder;
+    // this function compute particle thermal yield at given T, mu
+    //int sf_expint_truncate_order = 1;
 
     double N_eq = 0.0;                  // equilibrium contribution
-    double deltaN_bulk_term1 = 0.0;     // contribution from bulk delta f
-    double deltaN_bulk_term2 = 0.0;     // contribution from bulk delta f
-    double deltaN_qmu_term1 = 0.0;      // contribution from baryon diffusion
-    double deltaN_qmu_term2 = 0.0;      // contribution from baryon diffusion
+    //double deltaN_bulk_term1 = 0.0;     // contribution from bulk delta f
+    //double deltaN_bulk_term2 = 0.0;     // contribution from bulk delta f
+    //double deltaN_qmu_term1 = 0.0;      // contribution from baryon diffusion
+    //double deltaN_qmu_term2 = 0.0;      // contribution from baryon diffusion
 
     double beta = 1./Temperature;
     calculateChemicalpotential(mu_B, mu_S);
@@ -114,35 +114,35 @@ void particle::calculateParticleYield(double Temperature, double mu_B,
         double theta = pow(-sign, n-1);
         double fugacity = pow(lambda, n);
         double K_2 = gsl_sf_bessel_Kn(2, arg);
-        double K_1 = gsl_sf_bessel_K1(arg);
+        //double K_1 = gsl_sf_bessel_K1(arg);
         // cout << arg << "  " << K_1 << "  " << K_2;
 
         // equilibrium contribution
         N_eq += theta/n*fugacity*K_2;
 
         // bulk viscous contribution
-        deltaN_bulk_term1 += theta*fugacity*(mass*beta*K_1 + 3./n*K_2);
-        deltaN_bulk_term2 += theta*fugacity*K_1;
+        //deltaN_bulk_term1 += theta*fugacity*(mass*beta*K_1 + 3./n*K_2);
+        //deltaN_bulk_term2 += theta*fugacity*K_1;
 
         // baryon diffusion contribution
-        deltaN_qmu_term1 += theta/n*fugacity*K_2;
-        double I_1_1 = exp(-arg)/arg*(2./(arg*arg) + 2./arg - 1./2.);
-        double I_1_2 = 3./8.*gsl_sf_expint_E2(arg);
-        double I_1_n = I_1_1 + I_1_2;
+        //deltaN_qmu_term1 += theta/n*fugacity*K_2;
+        //double I_1_1 = exp(-arg)/arg*(2./(arg*arg) + 2./arg - 1./2.);
+        //double I_1_2 = 3./8.*gsl_sf_expint_E2(arg);
+        //double I_1_n = I_1_1 + I_1_2;
 
-        double double_factorial = 1.;  // record (2k-5)!!
-        double factorial = 2.;         // record k! start with 2!
-        double factor_2_to_k_power = 4.;      // record 2^k start with 2^2
-        for (int k = 3; k < sf_expint_truncate_order; k++) {
-            double_factorial *= (2*k - 5);
-            factorial *= k;
-            factor_2_to_k_power *= 2;
-            double I_1_k = (3.*double_factorial/factor_2_to_k_power/factorial
-                            *gsl_sf_expint_En(2*k-2, arg));
-            I_1_n += I_1_k;
-        }
-        I_1_n = -(mbeta*mbeta*mbeta)*I_1_n;
-        deltaN_qmu_term2 += n*theta*fugacity*I_1_n;
+        //double double_factorial = 1.;  // record (2k-5)!!
+        //double factorial = 2.;         // record k! start with 2!
+        //double factor_2_to_k_power = 4.;      // record 2^k start with 2^2
+        //for (int k = 3; k < sf_expint_truncate_order; k++) {
+        //    double_factorial *= (2*k - 5);
+        //    factorial *= k;
+        //    factor_2_to_k_power *= 2;
+        //    double I_1_k = (3.*double_factorial/factor_2_to_k_power/factorial
+        //                    *gsl_sf_expint_En(2*k-2, arg));
+        //    I_1_n += I_1_k;
+        //}
+        //I_1_n = -(mbeta*mbeta*mbeta)*I_1_n;
+        //deltaN_qmu_term2 += n*theta*fugacity*I_1_n;
     }
 
     // equilibrium contribution
@@ -150,12 +150,12 @@ void particle::calculateParticleYield(double Temperature, double mu_B,
     N_eq = prefactor*prefactor_Neq*N_eq;
 
     // bulk viscous contribution
-    deltaN_bulk_term1 = mass*mass/beta*deltaN_bulk_term1;
-    deltaN_bulk_term2 = mass*mass*mass/3.*deltaN_bulk_term2;
+    //deltaN_bulk_term1 = mass*mass/beta*deltaN_bulk_term1;
+    //deltaN_bulk_term2 = mass*mass*mass/3.*deltaN_bulk_term2;
 
     // baryon diffusion contribution
-    deltaN_qmu_term1 = mass*mass/(beta*beta)*deltaN_qmu_term1;
-    deltaN_qmu_term2 = 1./(3.*beta*beta*beta)*deltaN_qmu_term2;
+    //deltaN_qmu_term1 = mass*mass/(beta*beta)*deltaN_qmu_term1;
+    //deltaN_qmu_term2 = 1./(3.*beta*beta*beta)*deltaN_qmu_term2;
 
     yield = N_eq;
     return;
