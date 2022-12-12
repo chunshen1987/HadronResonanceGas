@@ -560,3 +560,12 @@ void particleList::calculateSystemEOS(double mu_B, double mu_S) {
     delete [] cs2_ptr;
     return;
 }
+
+
+void particleList::printParticleContributions() {
+    for (unsigned int i = 0; i < partList.size(); i++) {
+        cout << "particle " << partList[i]->getMonval() << ": "
+             << partList[i]->getParticleYield() << "  "
+             << partList[i]->getEnergyDensity() << endl;
+    }
+}

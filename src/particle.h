@@ -72,6 +72,7 @@ class particle {
     double getMu() {return(mu);}
     int getSign() {return(sign);}
     double getParticleYield() {return(yield);}
+    double getEnergyDensity() {return(ed);}
     void set_particle_stable_yield(double yield_in) {stable_yield = yield_in;}
     double get_particle_stable_yield() {return(stable_yield);}
     int getNdecays() {return(decays);}

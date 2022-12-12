@@ -41,6 +41,7 @@ class particleList {
                     double Temperature, Chemical_potential* mu_tb);
     void calculateSystemEOS_and_output_in_2D();
     void output_particle_chemical_potentials(Chemical_potential* mu_tb);
+    void printParticleContributions();
 };
 
 
