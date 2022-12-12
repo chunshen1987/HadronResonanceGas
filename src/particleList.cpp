@@ -322,7 +322,7 @@ int particleList::get_particle_idx(int particle_monval) {
     for (int i = 0; i < partList.size(); i++)
         if (partList[i]->getMonval() == particle_monval)
             return(i);
-    cout << "Warning: can not fine particle " << particle_monval << endl;
+    cout << "Warning: can not find particle " << particle_monval << endl;
     exit(1);
 }
 
