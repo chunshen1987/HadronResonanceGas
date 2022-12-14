@@ -6,33 +6,33 @@
 
 class particle {
  private:
-    double hbarC;       // GeV*fm
-    int monval;         // Monte-Carlo number according PDG
-    std::string name;   // particle name
-    double mass;        // particle mass (GeV)
-    double width;       // decay width
-    int gspin;          // spin degeneracy
-    int baryon;         // baryon number
-    int strange;        // strangeness
-    int charm;          // charmness
-    int bottom;         // bottomness
-    int gisospin;       // isospin degeneracy
-    int charge;         // charge
-    int decays;         // amount of decays listed for this resonance
-    int stable;         // defines whether this particle is stable
-    double mu;          // chemical potential
-    int sign;           // Bosons or Fermions
+    double hbarC;           //! GeV*fm
+    int monval;             //! Monte-Carlo number according PDG
+    std::string name;       //! particle name
+    double mass;            //! particle mass (GeV)
+    double width;           //! decay width
+    int gspin;              //! spin degeneracy
+    int baryon;             //! baryon number
+    int strange;            //! strangeness
+    int charm;              //! charmness
+    int bottom;             //! bottomness
+    int gisospin;           //! isospin degeneracy
+    int charge;             //! charge
+    int decays;             //! amount of decays listed for this resonance
+    int stable;             //! defines whether this particle is stable
+    double mu;              //! chemical potential
+    int sign;               //! Bosons or Fermions
 
-    double yield;                // particle thermal yield at given T and mu
-    double stable_yield;         // particle yield after decays
+    double yield;                //! particle thermal yield at given T and mu
+    double stable_yield;         //! particle yield after decays
 
-    double ed, sd, pressure;     // thermodynamic quantities at given T and mu
+    double ed, sd, pressure;     //! thermodynamic quantities at given T and mu
 
-    int NdecayChannel;           // number of decay channels
-    double* decays_branchratio;  // branching ratio of each decay channel
+    int NdecayChannel;           //! number of decay channels
+    double* decays_branchratio;  //! branching ratio of each decay channel
     // number of daughter particles of each decay channel
     int* decays_Npart;
-    int** decays_part;           // identity of daughter particles
+    int** decays_part;           //! identity of daughter particles
 
     // array to record particle decay probability
     // for the particle decays into stable ones
@@ -55,8 +55,9 @@ class particle {
             decay_probability[i] = 0.0;
     }
 
-    void calculateChemicalpotential(double mu_B, double mu_S);
-    void calculateParticleYield(double Temperature, double mu_B, double mu_S);
+    void calculateChemicalpotential(double mu_B, double mu_S, double mu_Q);
+    void calculateParticleYield(double Temperature, double mu_B,
+                                double mu_S, double mu_Q);
     double calculateEnergydensity(double Temperature);
     double calculatePressure(double Temperature);
     double calculateEntropydensity(double Temperature);
