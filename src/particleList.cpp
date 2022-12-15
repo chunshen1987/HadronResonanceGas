@@ -614,13 +614,13 @@ void particleList::calculateSystemEOS2D(double mu_S, double mu_Q) {
     output << "# T [GeV]  muB [GeV]  e/T^4  nB/T^3  s/T^3  P/T^3  "
            << "nS/T^3  nQ/T^3" << endl;
     for (int i = 0; i < nT; i++) {
+        double T3 = pow(temp_ptr[i], 3);
+        double T4 = pow(temp_ptr[i], 4);
         for (int j = 0; j < nmuB; j++) {
             int idx = i*nmuB + j;
-            double T3 = pow(temp_ptr[i], 3);
-            double T4 = pow(temp_ptr[i], 4);
             output << scientific << setw(20) << setprecision(8)
                    << temp_ptr[i] << "  " << muB_ptr[j] << "  "
-                   << ed_ptr[idx]/T3*unitFac << "  "
+                   << ed_ptr[idx]/T4*unitFac << "  "
                    << net_baryon_ptr[idx]/T3*unitFac << "  "
                    << sd_ptr[idx]/T3*unitFac << "  "
                    << pressure_ptr[idx]/T4*unitFac << "  "
@@ -693,13 +693,13 @@ void particleList::calculateSystemEOS2DNS(double n_S, double mu_Q) {
     output << "# T [GeV]  muB [GeV]  e/T^4  nB/T^3  s/T^3  P/T^3  "
            << "muS [GeV]  nQ/T^3" << endl;
     for (int i = 0; i < nT; i++) {
+        double T3 = pow(temp_ptr[i], 3);
+        double T4 = pow(temp_ptr[i], 4);
         for (int j = 0; j < nmuB; j++) {
             int idx = i*nmuB + j;
-            double T3 = pow(temp_ptr[i], 3);
-            double T4 = pow(temp_ptr[i], 4);
             output << scientific << setw(20) << setprecision(8)
                    << temp_ptr[i] << "  " << muB_ptr[j] << "  "
-                   << ed_ptr[idx]/T3*unitFac << "  "
+                   << ed_ptr[idx]/T4*unitFac << "  "
                    << net_baryon_ptr[idx]/T3*unitFac << "  "
                    << sd_ptr[idx]/T3*unitFac << "  "
                    << pressure_ptr[idx]/T4*unitFac << "  "
@@ -786,7 +786,7 @@ void particleList::calculateSystemEOS2DNSNQ(double n_S, double nQovernB) {
             int idx = i*nmuB + j;
             output << scientific << setw(20) << setprecision(8)
                    << temp_ptr[i] << "  " << muB_ptr[j] << "  "
-                   << ed_ptr[idx]/T3*unitFac << "  "
+                   << ed_ptr[idx]/T4*unitFac << "  "
                    << net_baryon_ptr[idx]/T3*unitFac << "  "
                    << sd_ptr[idx]/T3*unitFac << "  "
                    << pressure_ptr[idx]/T4*unitFac << "  "

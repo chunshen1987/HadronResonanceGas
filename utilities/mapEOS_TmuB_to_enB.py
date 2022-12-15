@@ -9,8 +9,9 @@ from scipy import interpolate
 
 try:
     EOS_table_file = str(sys.argv[1])
+    mode = int(sys.argv[2])
 except:
-    print("Usage: python3 {} EOS_table_file".format(sys.argv[0]))
+    print("Usage: python3 {} EOS_table_file mode".format(sys.argv[0]))
     exit(1)
 
 ACCURACY = 1e-6
@@ -30,11 +31,20 @@ ed_table  = eos_table[:, 2].reshape(n_T, n_muB)*(T_table**4.)/(hbarC**3.)       
 nB_table  = eos_table[:, 3].reshape(n_T, n_muB)*(T_table**3.)/(hbarC**3.)        # 1/fm^3
 s_table   = eos_table[:, 4].reshape(n_T, n_muB)*(T_table**3.)/(hbarC**3.)         # 1/fm^3
 P_table   = eos_table[:, 5].reshape(n_T, n_muB)*(T_table**4.)/(hbarC**3.)        # GeV/fm^3
+muS_table = np.zeros([n_T, n_muB])
+muQ_table = np.zeros([n_T, n_muB])
 
-f_p  = interpolate.RectBivariateSpline(Tarr, muBarr, P_table )
-f_e  = interpolate.RectBivariateSpline(Tarr, muBarr, ed_table)
-f_nB = interpolate.RectBivariateSpline(Tarr, muBarr, nB_table)
-#f_s  = interpolate.RectBivariateSpline(Tarr, muBarr, s_table )
+if mode == 1:
+    muS_table = eos_table[:, 6].reshape(n_T, n_muB)
+elif mode == 2:
+    muS_table = eos_table[:, 6].reshape(n_T, n_muB)
+    muQ_table = eos_table[:, 7].reshape(n_T, n_muB)
+
+f_p   = interpolate.RectBivariateSpline(Tarr, muBarr, P_table )
+f_e   = interpolate.RectBivariateSpline(Tarr, muBarr, ed_table)
+f_nB  = interpolate.RectBivariateSpline(Tarr, muBarr, nB_table)
+f_muS = interpolate.RectBivariateSpline(Tarr, muBarr, muS_table)
+f_muQ = interpolate.RectBivariateSpline(Tarr, muBarr, muQ_table)
 
 
 def binary_search_1d(ed_local, muB_local):
@@ -101,8 +111,10 @@ def binary_search_2d(ed_local, nB_local):
 def invert_EOS_tables(ed_local, nB_local):
     T_local, muB_local = binary_search_2d(ed_local, nB_local)
     P_local            = f_p(T_local, muB_local)[0]
-    #s_local            = f_s(T_local, muB_local)[0]
-    return(ed_local, nB_local ,P_local, T_local, muB_local)
+    muS_local          = f_muS(T_local, muB_local)[0]
+    muQ_local          = f_muQ(T_local, muB_local)[0]
+    return(ed_local, nB_local ,P_local, T_local,
+           muB_local, muS_local, muQ_local)
 
 #T_local, muB_local = binary_search_2d(1.0, 0.02)
 #print(T_local, muB_local, f_e(T_local, muB_local), f_nB(T_local, muB_local))
@@ -124,4 +136,5 @@ for i, e_i in enumerate(ed_list):
 
 # save to files
 np.savetxt("NEOS_converted.dat", output, fmt='%.6e', delimiter="  ",
-           header="e[GeV/fm^3]  nB[1/fm^3]  P[GeV/fm^3]  T[GeV]  muB[GeV]")
+           header=("e[GeV/fm^3]  nB[1/fm^3]  P[GeV/fm^3]  T[GeV]  "
+                   + "muB[GeV]  muS[GeV]  muQ[GeV]"))
