@@ -426,12 +426,13 @@ double particleList::findMuSFromNS(double T, double muB, double muQ,
         cout << "No solution for nS = " << nS << " 1/fm^3, with T = "
              << T << " GeV, muB = " << muB << " GeV, muQ = " << muQ
              << " GeV. nS_min(muS=-0.15GeV) = " << nS_min << " 1/fm^3, "
-             << "nS_max(muS=0.35GeV) = " << nS_max << " 1/fm^3." << endl;
+             << "nS_max(muS=0.40GeV) = " << nS_max << " 1/fm^3." << endl;
         exit(1);
     }
     double muS_mid = 0;
     double nS_mid = 0;
     double nB_mid = 0;
+    int iter = 0;
     do {
         muS_mid = (muS_min + muS_max)/2.;
         calculate_particle_yieldFugacity(T, muB, muS_mid, muQ);
@@ -444,10 +445,15 @@ double particleList::findMuSFromNS(double T, double muB, double muQ,
             muS_min = muS_mid;
             nS_min = nS_mid;
         }
-        //cout << "check : " << muS_mid << ", nS_mid = " << nS_mid
-        //     << "muS_min = " << muS_min << ", muS_max = " << muS_max << endl;
-    } while (std::abs(nS_mid - nS) > 1e-8
-             || std::abs((nS_mid - nS)/(nB_mid + 1e-16)) > 1e-4);
+        iter++;
+        if (iter > 1000) {
+            cout << "check : " << muS_mid << ", nS_mid = " << nS_mid
+                 << "muS_min = " << muS_min << ", muS_max = "
+                 << muS_max << ", nB = " << nB_mid << endl;
+        }
+    } while (std::abs(muS_max - muS_min) > 1e-10
+             && (std::abs(nS_mid - nS) > 1e-8
+                 || std::abs((nS_mid - nS)/(nB_mid + 1e-16)) > 1e-4));
     return(muS_mid);
 }
 
@@ -518,9 +524,10 @@ void particleList::calculateSystemEOS(double mu_B, double mu_S, double mu_Q) {
 // at given mu_B and mu_S and mu_Q
     cout << "calculate the EOS of the system with muB = " << mu_B
          << " GeV and mu_S = " << mu_S << " GeV .... " << endl;
-    int nT = 191;
+
+    int nT = 181;
     double T_i = 0.01;         // unit: (GeV)
-    double T_f = 0.2;          // unit: (GeV)
+    double T_f = 0.19;          // unit: (GeV)
     double dT = (T_f - T_i)/(nT - 1);
     std::vector<double> temp_ptr(nT, 0.);
     std::vector<double> ed_ptr(nT, 0.);
@@ -564,9 +571,9 @@ void particleList::calculateSystemEOS2D(double mu_S, double mu_Q) {
     cout << "calculate the EOS of the system with mu_S = " << mu_S
          << " GeV and mu_Q = " << mu_Q << " GeV .... " << endl;
 
-    int nT = 191;
+    int nT = 181;
     double T_i = 0.01;         // unit: (GeV)
-    double T_f = 0.2;          // unit: (GeV)
+    double T_f = 0.19;          // unit: (GeV)
     double dT = (T_f - T_i)/(nT - 1);
 
     int nmuB = 801;
@@ -638,9 +645,9 @@ void particleList::calculateSystemEOS2DNS(double n_S, double mu_Q) {
     cout << "calculate the EOS of the system with n_S = " << n_S
          << " GeV and mu_Q = " << mu_Q << " GeV .... " << endl;
 
-    int nT = 191;
+    int nT = 181;
     double T_i = 0.01;         // unit: (GeV)
-    double T_f = 0.2;          // unit: (GeV)
+    double T_f = 0.19;          // unit: (GeV)
     double dT = (T_f - T_i)/(nT - 1);
 
     int nmuB = 801;
@@ -717,9 +724,9 @@ void particleList::calculateSystemEOS2DNSNQ(double n_S, double nQovernB) {
     cout << "calculate the EOS of the system with n_S = " << n_S
          << " GeV and nQ/nB = " << nQovernB << " .... " << endl;
 
-    int nT = 191;
+    int nT = 181;
     double T_i = 0.01;         // unit: (GeV)
-    double T_f = 0.2;          // unit: (GeV)
+    double T_f = 0.19;          // unit: (GeV)
     double dT = (T_f - T_i)/(nT - 1);
 
     int nmuB = 801;

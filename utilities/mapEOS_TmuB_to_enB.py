@@ -12,6 +12,9 @@ try:
     mode = int(sys.argv[2])
 except:
     print("Usage: python3 {} EOS_table_file mode".format(sys.argv[0]))
+    print("       mode = 0: NEoS-B")
+    print("       mode = 1: NEoS-BS")
+    print("       mode = 2: NEoS-BQS")
     exit(1)
 
 ACCURACY = 1e-6
@@ -21,9 +24,9 @@ hbarC    = 0.19733
 eos_table = np.loadtxt(EOS_table_file)
 
 n_muB = 801
-n_T   = 191
-muBarr = np.linspace(0, 0.8, 801)
-Tarr = np.linspace(0.01, 0.2, 191)
+n_T   = 181
+muBarr = np.linspace(0, 0.8, n_muB)
+Tarr = np.linspace(0.01, 0.19, n_T)
 
 T_table   = eos_table[:, 0].reshape(n_T, n_muB)
 muB_table = eos_table[:, 1].reshape(n_T, n_muB)
