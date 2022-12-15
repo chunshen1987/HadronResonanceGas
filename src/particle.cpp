@@ -31,6 +31,7 @@ particle::particle(int monval_in, string name_in, double mass_in,
     NdecayChannel = NdecayChannel_in;
     stable = 0;
     stable_yield = 0.0;
+    yieldCached.resize(trunOrder, 0.);
 
     // determine Bose/Fermi statistic for particle
     if (baryon == 0)
@@ -92,19 +93,19 @@ int particle::getAntiparticleMonval() {
 void particle::calculateChemicalpotential(double mu_B, double mu_S,
                                           double mu_Q) {
     mu = mu_B*baryon + mu_S*strange + mu_Q*charge;
+    if (std::abs(mu) > mass) {
+        cout << "mu = " << mu << " GeV, mass = " << mass << " GeV, muB ="
+             << mu_B << " GeV, muS = " << mu_S << " GeV, muQ = " << mu_Q
+             << " GeV. B = " << baryon << ", S = " << strange << ", Q = "
+             << charge << endl;
+    }
 }
 
 
+//! this function compute particle thermal yield at given T, mu
 void particle::calculateParticleYield(double Temperature, double mu_B,
                                       double mu_S, double mu_Q) {
-    // this function compute particle thermal yield at given T, mu
-    //int sf_expint_truncate_order = 1;
-
     double N_eq = 0.0;                  // equilibrium contribution
-    //double deltaN_bulk_term1 = 0.0;     // contribution from bulk delta f
-    //double deltaN_bulk_term2 = 0.0;     // contribution from bulk delta f
-    //double deltaN_qmu_term1 = 0.0;      // contribution from baryon diffusion
-    //double deltaN_qmu_term2 = 0.0;      // contribution from baryon diffusion
 
     double beta = 1./Temperature;
     calculateChemicalpotential(mu_B, mu_S, mu_Q);
@@ -112,55 +113,31 @@ void particle::calculateParticleYield(double Temperature, double mu_B,
 
     double prefactor = gspin/(2*M_PI*M_PI)/hbarC/hbarC/hbarC;
     double mbeta = mass*beta;
+    double prefactor_Neq = mass*mass*Temperature;
 
     for (int n = 1; n < trunOrder; n++) {
         double arg = n*mbeta;  // argument inside bessel functions
         double theta = pow(-sign, n-1);
         double fugacity = pow(lambda, n);
         double K_2 = gsl_sf_bessel_Kn(2, arg);
-        //double K_1 = gsl_sf_bessel_K1(arg);
-        // cout << arg << "  " << K_1 << "  " << K_2;
-
-        // equilibrium contribution
-        N_eq += theta/n*fugacity*K_2;
-
-        // bulk viscous contribution
-        //deltaN_bulk_term1 += theta*fugacity*(mass*beta*K_1 + 3./n*K_2);
-        //deltaN_bulk_term2 += theta*fugacity*K_1;
-
-        // baryon diffusion contribution
-        //deltaN_qmu_term1 += theta/n*fugacity*K_2;
-        //double I_1_1 = exp(-arg)/arg*(2./(arg*arg) + 2./arg - 1./2.);
-        //double I_1_2 = 3./8.*gsl_sf_expint_E2(arg);
-        //double I_1_n = I_1_1 + I_1_2;
-
-        //double double_factorial = 1.;  // record (2k-5)!!
-        //double factorial = 2.;         // record k! start with 2!
-        //double factor_2_to_k_power = 4.;      // record 2^k start with 2^2
-        //for (int k = 3; k < sf_expint_truncate_order; k++) {
-        //    double_factorial *= (2*k - 5);
-        //    factorial *= k;
-        //    factor_2_to_k_power *= 2;
-        //    double I_1_k = (3.*double_factorial/factor_2_to_k_power/factorial
-        //                    *gsl_sf_expint_En(2*k-2, arg));
-        //    I_1_n += I_1_k;
-        //}
-        //I_1_n = -(mbeta*mbeta*mbeta)*I_1_n;
-        //deltaN_qmu_term2 += n*theta*fugacity*I_1_n;
+        yieldCached[n-1] = prefactor*prefactor_Neq*theta/n*K_2;
+        //N_eq += theta/n*fugacity*K_2;
+        N_eq += fugacity*yieldCached[n-1];
     }
+    yield = N_eq;
+}
 
-    // equilibrium contribution
-    double prefactor_Neq = mass*mass*Temperature;
-    N_eq = prefactor*prefactor_Neq*N_eq;
 
-    // bulk viscous contribution
-    //deltaN_bulk_term1 = mass*mass/beta*deltaN_bulk_term1;
-    //deltaN_bulk_term2 = mass*mass*mass/3.*deltaN_bulk_term2;
-
-    // baryon diffusion contribution
-    //deltaN_qmu_term1 = mass*mass/(beta*beta)*deltaN_qmu_term1;
-    //deltaN_qmu_term2 = 1./(3.*beta*beta*beta)*deltaN_qmu_term2;
-
+void particle::calculateParticleYieldFugacity(double T, double muB, double muS,
+                                              double muQ) {
+    double N_eq = 0.0;                  // equilibrium contribution
+    calculateChemicalpotential(muB, muS, muQ);
+    double lambda = exp(mu/T);          // fugacity factor
+    double fugacity = 1;
+    for (int n = 1; n < trunOrder; n++) {
+        fugacity *= lambda;
+        N_eq += fugacity*yieldCached[n-1];
+    }
     yield = N_eq;
 }
 

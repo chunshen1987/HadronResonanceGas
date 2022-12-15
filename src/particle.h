@@ -2,7 +2,8 @@
 #ifndef SRC_PARTICLE_H_
 #define SRC_PARTICLE_H_
 
-#include<string>
+#include <string>
+#include <vector>
 
 class particle {
  private:
@@ -40,6 +41,7 @@ class particle {
 
     int channelIdx;
     int trunOrder;               // truncated order in the summation
+    std::vector<double> yieldCached;
 
  public:
     particle(int monval_in, std::string name_in, double mass_in,
@@ -58,6 +60,9 @@ class particle {
     void calculateChemicalpotential(double mu_B, double mu_S, double mu_Q);
     void calculateParticleYield(double Temperature, double mu_B,
                                 double mu_S, double mu_Q);
+    void calculateParticleYieldFugacity(double T, double muB,
+                                        double muS, double muQ);
+
     double calculateEnergydensity(double Temperature);
     double calculatePressure(double Temperature);
     double calculateEntropydensity(double Temperature);

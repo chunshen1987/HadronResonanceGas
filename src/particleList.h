@@ -33,6 +33,8 @@ class particleList {
     void calculate_particle_mu(double mu_B, double mu_S, double mu_Q);
     void calculate_particle_yield(double Temperature, double mu_B=0.0,
                                   double mu_S=0.0, double mu_Q=0.0);
+    void calculate_particle_yieldFugacity(
+        double Temperature, double mu_B, double mu_S, double mu_Q);
 
     double calculateSystemenergyDensity(double Temperature);
     double calculateSystemPressure(double Temperature);
@@ -40,6 +42,12 @@ class particleList {
     double calculateSystemNetbaryonDensity();
     double calculateSystemNetStrangenessDensity();
     double calculateSystemNetElectricChargeDensity();
+
+    double findMuSFromNS(double T, double muB, double muQ, double nS);
+    void findMuQMuQFromNSNQ(double T, double muB, double nS,
+                            double nQovernBRatio, double &muS, double &muQ);
+    void calculateSystemEOS2DNS(double n_S, double mu_Q);
+    void calculateSystemEOS2DNSNQ(double n_S, double nQovernB);
 
     int get_particle_idx(int particle_monval);
     void calculate_particle_chemical_potential(
