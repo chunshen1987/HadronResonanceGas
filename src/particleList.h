@@ -16,7 +16,7 @@ class particleList {
     string particleListFilename;
     vector<particle*> partList;
     vector<particle*> stable_particle_list;
-    double edSystem, sdSystem, pressureSys, net_baryon_density;
+    double edSystem, sdSystem, pressureSys;
 
  public:
     particleList(string particleTableName);
@@ -33,10 +33,14 @@ class particleList {
     void calculate_particle_mu(double mu_B, double mu_S, double mu_Q);
     void calculate_particle_yield(double Temperature, double mu_B=0.0,
                                   double mu_S=0.0, double mu_Q=0.0);
-    void calculateSystemenergyDensity(double Temperature);
-    void calculateSystemPressure(double Temperature);
-    void calculateSystementropyDensity(double Temperature);
-    void calculateSystemnetbaryonDensity();
+
+    double calculateSystemenergyDensity(double Temperature);
+    double calculateSystemPressure(double Temperature);
+    double calculateSystementropyDensity(double Temperature);
+    double calculateSystemNetbaryonDensity();
+    double calculateSystemNetStrangenessDensity();
+    double calculateSystemNetElectricChargeDensity();
+
     int get_particle_idx(int particle_monval);
     void calculate_particle_chemical_potential(
                     double Temperature, Chemical_potential* mu_tb);

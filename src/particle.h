@@ -67,8 +67,9 @@ class particle {
     int getMonval() {return(monval);}
     std::string getName() {return(name);}
     double getMass() {return(mass);}
-    int getBaryon() {return(baryon);}
-    int getCharge() {return(charge);}
+    int getBaryon() const {return(baryon);}
+    int getStrangeness() const {return(strange);}
+    int getElectricCharge() const {return(charge);}
     int getSpinfactor() {return(gspin);}
     double getMu() {return(mu);}
     int getSign() {return(sign);}

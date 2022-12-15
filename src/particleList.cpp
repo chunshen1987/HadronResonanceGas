@@ -346,38 +346,59 @@ void particleList::calculate_particle_yield(double Temperature, double mu_B,
 }
 
 
-void particleList::calculateSystemnetbaryonDensity() {
+double particleList::calculateSystemNetbaryonDensity() {
     double result = 0.0;
-    for (int i = 0; i < partList.size(); i++)
+    for (int i = 0; i < partList.size(); i++) {
         result += partList[i]->getBaryon()*partList[i]->getParticleYield();
-    net_baryon_density = result;
+    }
+    return(result);
+}
+
+
+double particleList::calculateSystemNetStrangenessDensity() {
+    double result = 0.0;
+    for (int i = 0; i < partList.size(); i++) {
+        result += (partList[i]->getStrangeness()
+                   *partList[i]->getParticleYield());
+    }
+    return(result);
+}
+
+
+double particleList::calculateSystemNetElectricChargeDensity() {
+    double result = 0.0;
+    for (int i = 0; i < partList.size(); i++) {
+        result += (partList[i]->getElectricCharge()
+                   *partList[i]->getParticleYield());
+    }
+    return(result);
 }
 
 
 //! calculate the energy density of the system at given T and mu
-void particleList::calculateSystemenergyDensity(double Temperature) {
+double particleList::calculateSystemenergyDensity(double Temperature) {
     double result = 0.0e0;
     for (int i = 0; i < partList.size(); i++)
         result += partList[i]->calculateEnergydensity(Temperature);
-    edSystem = result;
+    return(result);
 }
 
 
 //! calculate the pressure of the system at given T and mu
-void particleList::calculateSystemPressure(double Temperature) {
+double particleList::calculateSystemPressure(double Temperature) {
     double result = 0.0e0;
     for (int i = 0; i < partList.size(); i++)
         result += partList[i]->calculatePressure(Temperature);
-    pressureSys = result;
+    return(result);
 }
 
 
 //! calculate the entropy density of the system at given T and mu
-void particleList::calculateSystementropyDensity(double Temperature) {
+double particleList::calculateSystementropyDensity(double Temperature) {
     double result = 0.0e0;
     for (int i = 0; i < partList.size(); i++)
         result += partList[i]->calculateEntropydensity(Temperature);
-    sdSystem = result;
+    return(result);
 }
 
 
@@ -399,14 +420,10 @@ void particleList::calculateSystemEOS(double mu_B, double mu_S, double mu_Q) {
     for (int i = 0; i < nT; i++) {
         temp_ptr[i] = T_i + i*dT;
         calculate_particle_yield(temp_ptr[i], mu_B, mu_S, mu_Q);
-        calculateSystemnetbaryonDensity();
-        calculateSystemenergyDensity(temp_ptr[i]);
-        calculateSystemPressure(temp_ptr[i]);
-        calculateSystementropyDensity(temp_ptr[i]);
-        ed_ptr[i] = edSystem;
-        sd_ptr[i] = sdSystem;
-        pressure_ptr[i] = pressureSys;
-        net_baryon_ptr[i] = net_baryon_density;
+        net_baryon_ptr[i] = calculateSystemNetbaryonDensity();
+        ed_ptr[i] = calculateSystemenergyDensity(temp_ptr[i]);
+        pressure_ptr[i] = calculateSystemPressure(temp_ptr[i]);
+        sd_ptr[i] = calculateSystementropyDensity(temp_ptr[i]);
     }
     // calculate speed of sound cs^2 = dP/de
     for (int i = 0; i < nT - 1; i++)
@@ -447,6 +464,7 @@ void particleList::calculateSystemEOS2D(double mu_S, double mu_Q) {
     double dmuB = (muB_f - muB_i)/(nmuB - 1);
 
     double HBARC = 0.19733;
+    double unitFac = HBARC*HBARC*HBARC;
 
     std::vector<double> temp_ptr(nT, 0.);
     std::vector<double> muB_ptr(nmuB, 0.);
@@ -461,17 +479,18 @@ void particleList::calculateSystemEOS2D(double mu_S, double mu_Q) {
     std::vector<double> sd_ptr(nT*nmuB, 0.);
     std::vector<double> pressure_ptr(nT*nmuB, 0.);
     std::vector<double> net_baryon_ptr(nT*nmuB, 0.);
+    std::vector<double> net_strangeness_ptr(nT*nmuB, 0.);
+    std::vector<double> net_electric_ptr(nT*nmuB, 0.);
     for (int i = 0; i < nT; i++) {
         for (int j = 0; j < nmuB; j++) {
+            int idx = i*nmuB + j;
             calculate_particle_yield(temp_ptr[i], muB_ptr[j], mu_S, mu_Q);
-            calculateSystemnetbaryonDensity();
-            calculateSystemenergyDensity(temp_ptr[i]);
-            calculateSystemPressure(temp_ptr[i]);
-            calculateSystementropyDensity(temp_ptr[i]);
-            ed_ptr[i*nmuB+j] = edSystem;
-            sd_ptr[i*nmuB+j] = sdSystem;
-            pressure_ptr[i*nmuB+j] = pressureSys;
-            net_baryon_ptr[i*nmuB+j] = net_baryon_density;
+            net_baryon_ptr[idx] = calculateSystemNetbaryonDensity();
+            ed_ptr[idx] = calculateSystemenergyDensity(temp_ptr[i]);
+            pressure_ptr[idx] = calculateSystemPressure(temp_ptr[i]);
+            sd_ptr[idx] = calculateSystementropyDensity(temp_ptr[i]);
+            net_strangeness_ptr[idx] = calculateSystemNetStrangenessDensity();
+            net_electric_ptr[idx] = calculateSystemNetElectricChargeDensity();
         }
     }
 
@@ -479,17 +498,21 @@ void particleList::calculateSystemEOS2D(double mu_S, double mu_Q) {
     ostringstream EOSfilename;
     EOSfilename << "./EOS2D_muS_" << mu_S << "_muQ_" << mu_Q << ".dat";
     ofstream output(EOSfilename.str().c_str());
-    output << "# T [GeV]  muB [GeV]  e/T^4  nB/T^3  s/T^3  P/T^3" << endl;
+    output << "# T [GeV]  muB [GeV]  e/T^4  nB/T^3  s/T^3  P/T^3  "
+           << "nS/T^3  nQ/T^3" << endl;
     for (int i = 0; i < nT; i++) {
         for (int j = 0; j < nmuB; j++) {
+            int idx = i*nmuB + j;
+            double T3 = pow(temp_ptr[i], 3);
+            double T4 = pow(temp_ptr[i], 4);
             output << scientific << setw(20) << setprecision(8)
                    << temp_ptr[i] << "  " << muB_ptr[j] << "  "
-                   << ed_ptr[i*nmuB+j]/pow(temp_ptr[i], 4)*pow(HBARC, 3) << "  "
-                   << (net_baryon_ptr[i*nmuB+j]
-                       /pow(temp_ptr[i], 3)*pow(HBARC, 3)) << "  "
-                   << sd_ptr[i*nmuB+j]/pow(temp_ptr[i], 3)*pow(HBARC, 3) << "  "
-                   << pressure_ptr[i*nmuB+j]/pow(temp_ptr[i], 4)*pow(HBARC, 3)
-                   << endl;
+                   << ed_ptr[idx]/T3*unitFac << "  "
+                   << net_baryon_ptr[idx]/T3*unitFac << "  "
+                   << sd_ptr[idx]/T3*unitFac << "  "
+                   << pressure_ptr[idx]/T4*unitFac << "  "
+                   << net_strangeness_ptr[idx]/T3*unitFac << "  "
+                   << net_electric_ptr[idx]/T3*unitFac << endl;
         }
     }
     output.close();
