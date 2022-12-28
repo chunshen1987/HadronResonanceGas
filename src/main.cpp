@@ -25,7 +25,7 @@ int main() {
     sw.tic();
 
     particleList hadronList("EOS/pdg.dat");
-    //hadronList.calculateSystemEOS(0., 0., 0.);
+    hadronList.calculateSystemEOS(0., 0., 0.);
     hadronList.calculateSystemEOS2D(0., 0.);
     hadronList.calculateSystemEOS2DNS(0., 0.);
     hadronList.calculateSystemEOS2DNSNQ(0., 0.4);

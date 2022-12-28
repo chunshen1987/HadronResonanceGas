@@ -5,8 +5,6 @@ import numpy as np
 import sys
 from os import path
 from scipy import interpolate
-import matplotlib.pyplot as plt
-import multiprocessing as mp
 
 
 try:
@@ -27,7 +25,7 @@ f_cs2 = interpolate.interp1d(eos_table[:, 0], eos_table[:, 5], kind='cubic')
 
 def binary_search_1d(ed_local):
     iteration = 0
-    T_min = 0.01; T_max = 0.20
+    T_min = 0.01; T_max = 0.19
     e_low = f_e(T_min)
     e_up  = f_e(T_max)
     if (ed_local < e_low):
@@ -75,4 +73,4 @@ s_list = (ed_list + p_list)/T_list
 # save to files
 output = np.array([ed_list, p_list, s_list, T_list, cs2_list])
 np.savetxt("EOSTable_PST.dat", output.transpose(), fmt="%.6e", delimiter="  ",
-           header="e [GeV/fm^3]  P [GeV/fm^3]  s [1/fm^3]  T [GeV]")
+           header="e [GeV/fm^3]  P [GeV/fm^3]  s [1/fm^3]  T [GeV]  cs^2")
