@@ -820,19 +820,19 @@ void particleList::calculateSystemEOS3DNS(double n_S) {
     cout << "calculate the EOS of the system with n_S = " << n_S
          << " fm^-3 ..." << endl;
 
-    int nT = 181;
-    double T_i = 0.01;         // unit: (GeV)
-    double T_f = 0.19;          // unit: (GeV)
+    int nT = 171;
+    double T_i = 0.01;          // unit: (GeV)
+    double T_f = 0.18;          // unit: (GeV)
     double dT = (T_f - T_i)/(nT - 1);
 
     int nmuB = 801;
-    double muB_i = 0.;
-    double muB_f = 0.8;
+    double muB_i = 0.;         // unit: GeV
+    double muB_f = 0.8;        // unit: GeV
     double dmuB = (muB_f - muB_i)/(nmuB - 1);
 
     int nmuQ = 275;
-    double muQ_i = -0.137;
-    double muQ_f = 0.137;
+    double muQ_i = -0.137;    // unit: GeV
+    double muQ_f = 0.137;     // unit: GeV
     double dmuQ = (muQ_f - muQ_i)/(nmuQ - 1);
 
     double HBARC = 0.19733;
