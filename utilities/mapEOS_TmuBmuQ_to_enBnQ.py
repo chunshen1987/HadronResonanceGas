@@ -36,16 +36,16 @@ P_table   = eos_table[:, 6].reshape(n_T, n_muB, n_muQ)*(T_table**4.)/(hbarC**3.)
 muS_table = eos_table[:, 7].reshape(n_T, n_muB, n_muQ)
 nQ_table  = eos_table[:, -1].reshape(n_T, n_muB, n_muQ)*(T_table**3.)/(hbarC**3.)        # 1/fm^3
 
-f_p   = interpolate.RectBivariateSpline(Tarr, muBarr, P_table )
-f_e   = interpolate.RectBivariateSpline(Tarr, muBarr, ed_table)
-f_nB  = interpolate.RectBivariateSpline(Tarr, muBarr, nB_table)
-f_muS = interpolate.RectBivariateSpline(Tarr, muBarr, muS_table)
-f_nQ = interpolate.RectBivariateSpline(Tarr, muBarr, nQ_table)
+f_p   = interpolate.RegularGridInterpolator((Tarr, muBarr, muQ_arr), P_table )
+f_e   = interpolate.RegularGridInterpolator((Tarr, muBarr, muQ_arr), ed_table)
+f_nB  = interpolate.RegularGridInterpolator((Tarr, muBarr, muQ_arr), nB_table)
+f_muS = interpolate.RegularGridInterpolator((Tarr, muBarr, muQ_arr), muS_table)
+f_nQ  = interpolate.RegularGridInterpolator((Tarr, muBarr, muQ_arr), nQ_table)
 
 
 def binary_search_1d(ed_local, muB_local, muQ_local):
     iteration = 0
-    T_min = 0.01; T_max = 0.20
+    T_min = 0.01; T_max = 0.18
     e_low = f_e(T_min, muB_local, muQ_local)
     e_up  = f_e(T_max, muB_local, muQ_local)
     if (ed_local < e_low):
@@ -74,7 +74,7 @@ def binary_search_1d(ed_local, muB_local, muQ_local):
 def binary_search_2d(ed_local, nB_local, muQ_local):
     iteration = 0
     muB_min = 0.0; muB_max = 0.8
-    T_min = 0.01; T_max = 0.20
+    T_min = 0.01; T_max = 0.18
     T_max = binary_search_1d(ed_local, muB_min, muQ_local)
     nB_min = f_nB(T_max, muB_min, muQ_local)
     T_min = binary_search_1d(ed_local, muB_max, muQ_local)
@@ -108,10 +108,10 @@ def binary_search_3d(ed_local, nB_local, nQ_local):
     iteration = 0
     muQ_min = -0.137; muB_max = 0.137
     muB_min = 0.0; muB_max = 0.8
-    T_min = 0.01; T_max = 0.20
-    T_max, muB_min = binary_search_2d(ed_local, muB_min, muQ_min)
+    T_min = 0.01; T_max = 0.18
+    T_max, muB_min = binary_search_2d(ed_local, nB_local, muQ_min)
     nQ_min = f_nQ(T_max, muB_min, muQ_min)
-    T_min, muB_max = binary_search_2d(ed_local, muB_max, muQ_max)
+    T_min, muB_max = binary_search_2d(ed_local, nB_local, muQ_max)
     nQ_max = f_nQ(T_min, muB_max, muQ_max)
     if (nQ_local < nQ_min):
         return(T_max, muB_min, muQ_min)
@@ -145,14 +145,15 @@ def invert_EOS_tables(ed_local, nB_local, nQ_local):
     return(ed_local, nB_local, nQ_local, P_local, T_local,
            muB_local, muS_local, muQ_local)
 
-#T_local, muB_local = binary_search_2d(1.0, 0.02)
-#print(T_local, muB_local, f_e(T_local, muB_local), f_nB(T_local, muB_local))
+#T_local, muB_local, muQ_local = binary_search_3d(1.0, 0.02, 0.01)
+#print(T_local, muB_local, muQ_local, f_e(T_local, muB_local, muQ_local),
+#      f_nB(T_local, muB_local, muQ_local), f_nQ(T_local, muB_local, muQ_local))
 
 Ne = 200
 ed_list = np.linspace(1e-2, 2, Ne)
-nBmax_list = np.interp(ed_list, ed_table[:, 800], nB_table[:, 800])
-nQmin_list = np.interp(ed_list, ed_table[:, 800], nQ_table[:, 0])
-nQmax_list = np.interp(ed_list, ed_table[:, 800], nQ_table[:, 800])
+nBmax_list = np.interp(ed_list, ed_table[:, 800, :], nB_table[:, 800, :])
+nQmin_list = np.interp(ed_list, ed_table[:, :, 0], nQ_table[:, :, 0])
+nQmax_list = np.interp(ed_list, ed_table[:, :, 274], nQ_table[:, :, 274])
 NnB = 200
 NnQ = 100
 
