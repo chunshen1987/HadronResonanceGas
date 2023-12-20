@@ -331,6 +331,7 @@ int particleList::get_particle_idx(int particle_monval) {
 //! need to add support for partial chemical equilibrium
 void particleList::calculate_particle_mu(double mu_B, double mu_S,
                                          double mu_Q) {
+    #pragma omp parallel for
     for (int i = 0; i < partList.size(); i++)
         partList[i]->calculateChemicalpotential(mu_B, mu_S, mu_Q);
 }
@@ -339,16 +340,16 @@ void particleList::calculate_particle_mu(double mu_B, double mu_S,
 //! calculate particle yield
 void particleList::calculate_particle_yield(double Temperature, double mu_B,
                                             double mu_S, double mu_Q) {
-    //calculate_particle_mu(mu_B, mu_S, mu_Q);
+    #pragma omp parallel for
     for (int i = 0; i < partList.size(); i++)
         partList[i]->calculateParticleYield(Temperature, mu_B, mu_S, mu_Q);
-    //calculate_particle_decays();
 }
 
 
 //! calculate particle yield when only mu changed
 void particleList::calculate_particle_yieldFugacity(
         double Temperature, double mu_B, double mu_S, double mu_Q) {
+    #pragma omp parallel for
     for (int i = 0; i < partList.size(); i++) {
         partList[i]->calculateParticleYieldFugacity(Temperature, mu_B,
                                                     mu_S, mu_Q);
@@ -358,6 +359,7 @@ void particleList::calculate_particle_yieldFugacity(
 
 double particleList::calculateSystemNetbaryonDensity() {
     double result = 0.0;
+    #pragma omp parallel for reduction(+:result)
     for (int i = 0; i < partList.size(); i++) {
         result += partList[i]->getBaryon()*partList[i]->getParticleYield();
     }
@@ -367,6 +369,7 @@ double particleList::calculateSystemNetbaryonDensity() {
 
 double particleList::calculateSystemNetStrangenessDensity() {
     double result = 0.0;
+    #pragma omp parallel for reduction(+:result)
     for (int i = 0; i < partList.size(); i++) {
         result += (partList[i]->getStrangeness()
                    *partList[i]->getParticleYield());
@@ -377,6 +380,7 @@ double particleList::calculateSystemNetStrangenessDensity() {
 
 double particleList::calculateSystemNetElectricChargeDensity() {
     double result = 0.0;
+    #pragma omp parallel for reduction(+:result)
     for (int i = 0; i < partList.size(); i++) {
         result += (partList[i]->getElectricCharge()
                    *partList[i]->getParticleYield());
@@ -388,8 +392,10 @@ double particleList::calculateSystemNetElectricChargeDensity() {
 //! calculate the energy density of the system at given T and mu
 double particleList::calculateSystemenergyDensity(double Temperature) {
     double result = 0.0e0;
-    for (int i = 0; i < partList.size(); i++)
+    #pragma omp parallel for reduction(+:result)
+    for (int i = 0; i < partList.size(); i++) {
         result += partList[i]->calculateEnergydensity(Temperature);
+    }
     return(result);
 }
 
@@ -397,8 +403,10 @@ double particleList::calculateSystemenergyDensity(double Temperature) {
 //! calculate the pressure of the system at given T and mu
 double particleList::calculateSystemPressure(double Temperature) {
     double result = 0.0e0;
-    for (int i = 0; i < partList.size(); i++)
+    #pragma omp parallel for reduction(+:result)
+    for (int i = 0; i < partList.size(); i++) {
         result += partList[i]->calculatePressure(Temperature);
+    }
     return(result);
 }
 
@@ -406,8 +414,10 @@ double particleList::calculateSystemPressure(double Temperature) {
 //! calculate the entropy density of the system at given T and mu
 double particleList::calculateSystementropyDensity(double Temperature) {
     double result = 0.0e0;
-    for (int i = 0; i < partList.size(); i++)
+    #pragma omp parallel for reduction(+:result)
+    for (int i = 0; i < partList.size(); i++) {
         result += partList[i]->calculateEntropydensity(Temperature);
+    }
     return(result);
 }
 
@@ -458,7 +468,7 @@ double particleList::findMuSFromNS(double T, double muB, double muQ,
 }
 
 
-void particleList::findMuQMuQFromNSNQ(double T, double muB, double nS,
+void particleList::findMuSMuQFromNSNQ(double T, double muB, double nS,
                                       double nQovernBRatio,
                                       double &muS, double &muQ) {
     if (std::abs(muB) < 1e-4) {
@@ -759,7 +769,7 @@ void particleList::calculateSystemEOS2DNSNQ(double n_S, double nQovernB) {
             int idx = i*nmuB + j;
             double mu_S = 0.;
             double mu_Q = 0.;
-            findMuQMuQFromNSNQ(temp_ptr[i], muB_ptr[j], n_S, nQovernB,
+            findMuSMuQFromNSNQ(temp_ptr[i], muB_ptr[j], n_S, nQovernB,
                                mu_S, mu_Q);
             calculate_particle_yieldFugacity(temp_ptr[i], muB_ptr[j],
                                              mu_S, mu_Q);
@@ -798,6 +808,103 @@ void particleList::calculateSystemEOS2DNSNQ(double n_S, double nQovernB) {
                    << sd_ptr[idx]/T3*unitFac << "  "
                    << pressure_ptr[idx]/T4*unitFac << "  "
                    << muS_ptr[idx] << "  " << muQ_ptr[idx] << endl;
+        }
+    }
+    output.close();
+}
+
+
+void particleList::calculateSystemEOS3DNS(double n_S) {
+    // calculate the EOS of given system, e, p, s as functions of T, muB, muQ
+    // at given n_S
+    cout << "calculate the EOS of the system with n_S = " << n_S
+         << " fm^-3 ..." << endl;
+
+    int nT = 181;
+    double T_i = 0.01;         // unit: (GeV)
+    double T_f = 0.19;          // unit: (GeV)
+    double dT = (T_f - T_i)/(nT - 1);
+
+    int nmuB = 801;
+    double muB_i = 0.;
+    double muB_f = 0.8;
+    double dmuB = (muB_f - muB_i)/(nmuB - 1);
+
+    int nmuQ = 275;
+    double muQ_i = -0.137;
+    double muQ_f = 0.137;
+    double dmuQ = (muQ_f - muQ_i)/(nmuQ - 1);
+
+    double HBARC = 0.19733;
+    double unitFac = HBARC*HBARC*HBARC;
+
+    std::vector<double> temp_ptr(nT, 0.);
+    std::vector<double> muB_ptr(nmuB, 0.);
+    std::vector<double> muQ_ptr(nmuQ, 0.);
+    for (int i = 0; i < nT; i++) {
+        temp_ptr[i] = T_i + i*dT;
+    }
+    for (int i = 0; i < nmuB; i++) {
+        muB_ptr[i] = muB_i + i*dmuB;
+    }
+    for (int i = 0; i < nmuQ; i++) {
+        muQ_ptr[i] = muQ_i + i*dmuQ;
+    }
+
+    std::vector<double> ed_ptr(nT*nmuB*nmuQ, 0.);
+    std::vector<double> sd_ptr(nT*nmuB*nmuQ, 0.);
+    std::vector<double> pressure_ptr(nT*nmuB*nmuQ, 0.);
+    std::vector<double> net_baryon_ptr(nT*nmuB*nmuQ, 0.);
+    std::vector<double> muS_ptr(nT*nmuB*nmuQ, 0.);
+    std::vector<double> net_electric_ptr(nT*nmuB*nmuQ, 0.);
+    for (int i = 0; i < nT; i++) {
+        cout << "computing for T = " << temp_ptr[i] << " GeV ..." << endl;
+        calculate_particle_yield(temp_ptr[i], 0., 0., 0.);
+        for (int j = 0; j < nmuB; j++) {
+            for (int k = 0; k < nmuQ; k++) {
+                int idx = i*nmuB*nmuQ + j*nmuQ + k;
+                double mu_S = findMuSFromNS(
+                        temp_ptr[i], muB_ptr[j], muQ_ptr[k], n_S);
+                calculate_particle_yieldFugacity(temp_ptr[i], muB_ptr[j],
+                                                 mu_S, muQ_ptr[k]);
+                net_baryon_ptr[idx] = calculateSystemNetbaryonDensity();
+                ed_ptr[idx] = calculateSystemenergyDensity(temp_ptr[i]);
+                pressure_ptr[idx] = calculateSystemPressure(temp_ptr[i]);
+                sd_ptr[idx] = calculateSystementropyDensity(temp_ptr[i]);
+                muS_ptr[idx] = mu_S;
+                net_electric_ptr[idx] = (
+                        calculateSystemNetElectricChargeDensity());
+                //double nS = calculateSystemNetStrangenessDensity();
+                //cout << "check: T = " << temp_ptr[i] << " GeV, muB = "
+                //     << muB_ptr[j] << " GeV, muQ = " << muQ_ptr[k]
+                //     << " GeV, muS = " << muS_ptr[idx]
+                //     << " GeV, " << "nS = " << nS << endl;
+            }
+        }
+    }
+
+    // output EOS table
+    ostringstream EOSfilename;
+    EOSfilename << "./EOS3D_nS_" << n_S << ".dat";
+    ofstream output(EOSfilename.str().c_str());
+    output << "# T [GeV]  muB [GeV]  muQ [GeV] e/T^4  nB/T^3  s/T^3  P/T^3  "
+           << "muS [GeV]  nQ/T^3" << endl;
+    for (int i = 0; i < nT; i++) {
+        double T3 = pow(temp_ptr[i], 3);
+        double T4 = pow(temp_ptr[i], 4);
+        for (int j = 0; j < nmuB; j++) {
+            for (int k = 0; k < nmuQ; k++) {
+                int idx = i*nmuB*nmuQ + j*nmuQ + k;
+                output << scientific << setw(20) << setprecision(8)
+                       << temp_ptr[i] << "  " << muB_ptr[j] << "  "
+                       << muQ_ptr[k] << "  "
+                       << ed_ptr[idx]/T4*unitFac << "  "
+                       << net_baryon_ptr[idx]/T3*unitFac << "  "
+                       << sd_ptr[idx]/T3*unitFac << "  "
+                       << pressure_ptr[idx]/T4*unitFac << "  "
+                       << muS_ptr[idx] << "  "
+                       << net_electric_ptr[idx]/T3*unitFac << endl;
+            }
         }
     }
     output.close();

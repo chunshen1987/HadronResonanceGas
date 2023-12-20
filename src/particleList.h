@@ -44,10 +44,12 @@ class particleList {
     double calculateSystemNetElectricChargeDensity();
 
     double findMuSFromNS(double T, double muB, double muQ, double nS);
-    void findMuQMuQFromNSNQ(double T, double muB, double nS,
+    void findMuSMuQFromNSNQ(double T, double muB, double nS,
                             double nQovernBRatio, double &muS, double &muQ);
     void calculateSystemEOS2DNS(double n_S, double mu_Q);
     void calculateSystemEOS2DNSNQ(double n_S, double nQovernB);
+
+    void calculateSystemEOS3DNS(double n_S);
 
     int get_particle_idx(int particle_monval);
     void calculate_particle_chemical_potential(
