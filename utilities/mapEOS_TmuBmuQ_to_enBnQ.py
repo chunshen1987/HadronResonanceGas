@@ -6,6 +6,7 @@ import sys
 from os import path
 from scipy import interpolate
 from joblib import Parallel, delayed
+import array
 
 
 try:
@@ -283,7 +284,7 @@ print(f"T = {T_local:.3e}, muB = {muB_local:.3e}, muQ = {muQ_local:.3e},"
       + f"nB = {f_nB(np.array([T_local, muB_local, muQ_local]))[0]:.3f},"
       + f"nQ = {f_nQ(np.array([T_local, muB_local, muQ_local]))[0]:.3f}")
 
-Ne = 3
+Ne = 60
 NnB = 40
 NnQ = 40
 ed_list = np.linspace(1e-2, 0.6, Ne)
@@ -320,6 +321,8 @@ for i, e_i in enumerate(ed_list):
 output = np.array(output).reshape(-1, 8)
 
 # save to files
-np.savetxt("NEOS_converted.dat", output, fmt='%.6e', delimiter="  ",
-           header=("e[GeV/fm^3]  nB[1/fm^3]  nQ[1/fm^3]  P[GeV/fm^3]  T[GeV]  "
-                   + "muB[GeV]  muS[GeV]  muQ[GeV]"))
+outputFile = open("NEOS3D.bin", "wb")
+for data_i in output:
+    float_array = array.array('f', data_i)
+    float_array.tofile(outputFile)
+outputFile.close()
