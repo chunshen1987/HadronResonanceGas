@@ -37,11 +37,116 @@ P_table   = eos_table[:, 6].reshape(n_T, n_muB, n_muQ)*(T_table**4.)/(hbarC**3.)
 muS_table = eos_table[:, 7].reshape(n_T, n_muB, n_muQ)
 nQ_table  = eos_table[:, -1].reshape(n_T, n_muB, n_muQ)*(T_table**3.)/(hbarC**3.)       # 1/fm^3
 
-f_p   = interpolate.RegularGridInterpolator((Tarr, muBarr, muQarr), P_table )
-f_e   = interpolate.RegularGridInterpolator((Tarr, muBarr, muQarr), ed_table)
-f_nB  = interpolate.RegularGridInterpolator((Tarr, muBarr, muQarr), nB_table)
-f_muS = interpolate.RegularGridInterpolator((Tarr, muBarr, muQarr), muS_table)
-f_nQ  = interpolate.RegularGridInterpolator((Tarr, muBarr, muQarr), nQ_table)
+f_p   = interpolate.RegularGridInterpolator((Tarr, muBarr, muQarr), P_table, bounds_error=False, fill_value=None)
+f_e   = interpolate.RegularGridInterpolator((Tarr, muBarr, muQarr), ed_table, bounds_error=False, fill_value=None)
+f_nB  = interpolate.RegularGridInterpolator((Tarr, muBarr, muQarr), nB_table, bounds_error=False, fill_value=None)
+f_muS = interpolate.RegularGridInterpolator((Tarr, muBarr, muQarr), muS_table, bounds_error=False, fill_value=None)
+f_nQ  = interpolate.RegularGridInterpolator((Tarr, muBarr, muQarr), nQ_table, bounds_error=False, fill_value=None)
+
+
+def getDe(T_local, muB_local, muQ_local):
+    """
+        return (de/dT, de/dmuB, de/dmuQ) at a given (T, muB, muQ)
+    """
+    dT = max(1e-3, T_local*0.02);
+    T1 = T_local - dT; T2 = T_local + dT
+    dmuB = max(1e-3, muB_local*0.02);
+    muB1 = muB_local - dmuB; muB2 = muB_local + dmuB
+    dmuQ = max(1e-3, abs(muQ_local)*0.02);
+    muQ1 = muQ_local - dmuQ; muQ2 = muQ_local + dmuQ
+    e1 = f_e(np.array([T1, muB_local, muQ_local]))[0]
+    e2 = f_e(np.array([T2, muB_local, muQ_local]))[0]
+    dedT = (e2 - e1)/(2*dT)
+    e1 = f_e(np.array([T_local, muB1, muQ_local]))[0]
+    e2 = f_e(np.array([T_local, muB2, muQ_local]))[0]
+    dedmuB = (e2 - e1)/(2*dmuB)
+    e1 = f_e(np.array([T_local, muB_local, muQ1]))[0]
+    e2 = f_e(np.array([T_local, muB_local, muQ2]))[0]
+    dedmuQ = (e2 - e1)/(2*dmuQ)
+    return [dedT, dedmuB, dedmuQ]
+
+
+def getDnB(T_local, muB_local, muQ_local):
+    """
+        return (dnB/dT, dnB/dmuB, dnB/dmuQ) at a given (T, muB, muQ)
+    """
+    dT = max(1e-3, T_local*0.02);
+    T1 = T_local - dT; T2 = T_local + dT
+    dmuB = max(1e-3, muB_local*0.02);
+    muB1 = muB_local - dmuB; muB2 = muB_local + dmuB
+    dmuQ = max(1e-3, abs(muQ_local)*0.02);
+    muQ1 = muQ_local - dmuQ; muQ2 = muQ_local + dmuQ
+    nB1 = f_nB(np.array([T1, muB_local, muQ_local]))[0]
+    nB2 = f_nB(np.array([T2, muB_local, muQ_local]))[0]
+    dnBdT = (nB2 - nB1)/(2*dT)
+    nB1 = f_nB(np.array([T_local, muB1, muQ_local]))[0]
+    nB2 = f_nB(np.array([T_local, muB2, muQ_local]))[0]
+    dnBdmuB = (nB2 - nB1)/(2*dmuB)
+    nB1 = f_nB(np.array([T_local, muB_local, muQ1]))[0]
+    nB2 = f_nB(np.array([T_local, muB_local, muQ2]))[0]
+    dnBdmuQ = (nB2 - nB1)/(2*dmuQ)
+    return [dnBdT, dnBdmuB, dnBdmuQ]
+
+
+def getDnQ(T_local, muB_local, muQ_local):
+    """
+        return (dnQ/dT, dnQ/dmuB, dnQ/dmuQ) at a given (T, muB, muQ)
+    """
+    dT = max(1e-3, T_local*0.02);
+    T1 = T_local - dT; T2 = T_local + dT
+    dmuB = max(1e-3, muB_local*0.02);
+    muB1 = muB_local - dmuB; muB2 = muB_local + dmuB
+    dmuQ = max(1e-3, abs(muQ_local)*0.02);
+    muQ1 = muQ_local - dmuQ; muQ2 = muQ_local + dmuQ
+    nQ1 = f_nQ(np.array([T1, muB_local, muQ_local]))[0]
+    nQ2 = f_nQ(np.array([T2, muB_local, muQ_local]))[0]
+    dnQdT = (nQ2 - nQ1)/(2*dT)
+    nQ1 = f_nQ(np.array([T_local, muB1, muQ_local]))[0]
+    nQ2 = f_nQ(np.array([T_local, muB2, muQ_local]))[0]
+    dnQdmuB = (nQ2 - nQ1)/(2*dmuB)
+    nQ1 = f_nQ(np.array([T_local, muB_local, muQ1]))[0]
+    nQ2 = f_nQ(np.array([T_local, muB_local, muQ2]))[0]
+    dnQdmuQ = (nQ2 - nQ1)/(2*dmuQ)
+    return [dnQdT, dnQdmuB, dnQdmuQ]
+
+
+def Newton3D(ed_local, nB_local, nQ_local, guessSol):
+    """
+        return (T, muB, muQ) at a given (e, nB, nQ)
+    """
+    iterations = 0
+    T_sol = guessSol[0]
+    muB_sol = guessSol[1]
+    muQ_sol = guessSol[2]
+
+    e = f_e(np.array([T_sol, muB_sol, muQ_sol]))[0]
+    nB = f_nB(np.array([T_sol, muB_sol, muQ_sol]))[0]
+    nQ = f_nQ(np.array([T_sol, muB_sol, muQ_sol]))[0]
+    status = True
+    while (abs(e - ed_local) > ACCURACY or abs(nB - nB_local) > ACCURACY
+           or abs(nQ - nQ_local) > ACCURACY):
+        de = getDe(T_sol, muB_sol, muQ_sol)
+        dnB = getDnB(T_sol, muB_sol, muQ_sol)
+        dnQ = getDnQ(T_sol, muB_sol, muQ_sol)
+        # solve A x = b
+        A = np.array([de, dnB, dnQ])
+        b = np.array([e - ed_local, nB - nB_local, nQ - nQ_local])
+        x = np.dot(np.linalg.inv(A), b)
+
+        T_sol -= x[0]
+        muB_sol -= x[1]
+        muQ_sol -= x[2]
+
+        e = f_e(np.array([T_sol, muB_sol, muQ_sol]))[0]
+        nB = f_nB(np.array([T_sol, muB_sol, muQ_sol]))[0]
+        nQ = f_nQ(np.array([T_sol, muB_sol, muQ_sol]))[0]
+        iterations += 1
+        if iterations > MAXITER:
+            status = False
+            break
+    return status, T_sol, muB_sol, muQ_sol
+
+
 
 
 def binary_search_1d(ed_local, muB_local, muQ_local):
@@ -146,25 +251,41 @@ def binary_search_3d(ed_local, nB_local, nQ_local):
 
 
 def invert_EOS_tables(ed_local, nB_local, nQ_local):
-    T_local, muB_local, muQ_local = binary_search_3d(ed_local, nB_local,
-                                                     nQ_local)
+    success = False
+    try:
+        guessSol = [0.15, 0.02, 0.01]
+        success, T_local, muB_local, muQ_local = Newton3D(
+                        ed_local, nB_local, nQ_local, guessSol)
+    except:
+        T_local, muB_local, muQ_local = binary_search_3d(ed_local, nB_local,
+                                                         nQ_local)
+        success = True
+    if not success:
+        T_local, muB_local, muQ_local = binary_search_3d(ed_local, nB_local,
+                                                         nQ_local)
     P_local = f_p(np.array([T_local, muB_local, muQ_local]))[0]
     muS_local = f_muS(np.array([T_local, muB_local, muQ_local]))[0]
     return [ed_local, nB_local, nQ_local, P_local, T_local,
             muB_local, muS_local, muQ_local]
 
-e_check = 0.6; nB_check = 0.0; nQ_check = 0.0
-T_local, muB_local, muQ_local = binary_search_3d(e_check, nB_check, nQ_check)
+e_check = 0.6; nB_check = 0.4; nQ_check = 0.0
 print(f"check e = {e_check}, nB = {nB_check}, nQ = {nQ_check}")
+guessSol = [0.15, 0.02, 0.01]
+success, T_local, muB_local, muQ_local = Newton3D(
+                            e_check, nB_check, nQ_check, guessSol)
 print(f"T = {T_local:.3e}, muB = {muB_local:.3e}, muQ = {muQ_local:.3e},"
       + f"e0 = {f_e(np.array([T_local, muB_local, muQ_local]))[0]:.3f},"
       + f"nB = {f_nB(np.array([T_local, muB_local, muQ_local]))[0]:.3f},"
       + f"nQ = {f_nQ(np.array([T_local, muB_local, muQ_local]))[0]:.3f}")
-exit(0)
+T_local, muB_local, muQ_local = binary_search_3d(e_check, nB_check, nQ_check)
+print(f"T = {T_local:.3e}, muB = {muB_local:.3e}, muQ = {muQ_local:.3e},"
+      + f"e0 = {f_e(np.array([T_local, muB_local, muQ_local]))[0]:.3f},"
+      + f"nB = {f_nB(np.array([T_local, muB_local, muQ_local]))[0]:.3f},"
+      + f"nQ = {f_nQ(np.array([T_local, muB_local, muQ_local]))[0]:.3f}")
 
-Ne = 60
-NnB = 50
-NnQ = 30
+Ne = 3
+NnB = 40
+NnQ = 40
 ed_list = np.linspace(1e-2, 0.6, Ne)
 
 # generate tables
@@ -189,16 +310,14 @@ for i, e_i in enumerate(ed_list):
         nQmax = f_nQ(np.array([T2, muB2, muQMAX]))[0]
         nQ_list = np.linspace(nQmin, nQmax, NnQ)
         print(f"  nQmin = {nQmin:.3e} fm^{-3}, nQmax = {nQmax:.3e} fm^{-3}")
-        #for k, nQ_k in enumerate(nQ_list):
-        #    output.append(invert_EOS_tables(e_i, nB_j, nQ_k))
-        num_jobs = -1  # Set to -1 to use all available cores
+        num_jobs = -1           # Set to -1 to use all available cores
         results = Parallel(n_jobs=num_jobs)(
             delayed(invert_EOS_tables)(e_i, nB_j, nQ_k) for nQ_k in nQ_list)
         results = np.array(results)
         sorted_indices = np.argsort(results[:, 2])
         sorted_results = results[sorted_indices]
-        #print(sorted_results)
         output.append(sorted_results)
+output = np.array(output).reshape(-1, 8)
 
 # save to files
 np.savetxt("NEOS_converted.dat", output, fmt='%.6e', delimiter="  ",
