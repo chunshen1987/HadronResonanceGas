@@ -153,18 +153,19 @@ def invert_EOS_tables(ed_local, nB_local, nQ_local):
     return [ed_local, nB_local, nQ_local, P_local, T_local,
             muB_local, muS_local, muQ_local]
 
-e_check = 0.15; nB_check = 0.02; nQ_check = 0.01
+e_check = 0.6; nB_check = 0.0; nQ_check = 0.0
 T_local, muB_local, muQ_local = binary_search_3d(e_check, nB_check, nQ_check)
 print(f"check e = {e_check}, nB = {nB_check}, nQ = {nQ_check}")
-print(f"T = {T_local:.3f}, muB = {muB_local:.3f}, muQ = {muQ_local:.3f},"
+print(f"T = {T_local:.3e}, muB = {muB_local:.3e}, muQ = {muQ_local:.3e},"
       + f"e0 = {f_e(np.array([T_local, muB_local, muQ_local]))[0]:.3f},"
       + f"nB = {f_nB(np.array([T_local, muB_local, muQ_local]))[0]:.3f},"
       + f"nQ = {f_nQ(np.array([T_local, muB_local, muQ_local]))[0]:.3f}")
+exit(0)
 
-Ne = 70
+Ne = 60
 NnB = 50
 NnQ = 30
-ed_list = np.linspace(1e-2, 0.7, Ne)
+ed_list = np.linspace(1e-2, 0.6, Ne)
 
 # generate tables
 print(f"Generating table ... ")
@@ -183,15 +184,16 @@ for i, e_i in enumerate(ed_list):
     for j, nB_j in enumerate(nB_list):
         print(f"nB = {nB_j:.3e} fm^{-3} ...")
         T1, muB1 = binary_search_2d(e_i, nB_j, muQMIN)
-        nQmin = f_nQ(np.array([T1, muB1, muQMIN]))
+        nQmin = f_nQ(np.array([T1, muB1, muQMIN]))[0]
         T2, muB2 = binary_search_2d(e_i, nB_j, muQMAX)
-        nQmax = f_nQ(np.array([T2, muB2, muQMAX]))
+        nQmax = f_nQ(np.array([T2, muB2, muQMAX]))[0]
         nQ_list = np.linspace(nQmin, nQmax, NnQ)
+        print(f"  nQmin = {nQmin:.3e} fm^{-3}, nQmax = {nQmax:.3e} fm^{-3}")
         #for k, nQ_k in enumerate(nQ_list):
         #    output.append(invert_EOS_tables(e_i, nB_j, nQ_k))
         num_jobs = -1  # Set to -1 to use all available cores
         results = Parallel(n_jobs=num_jobs)(
-            delayed(invert_EOS_tables)(e_i, nB_j, nQ_k[0]) for nQ_k in nQ_list)
+            delayed(invert_EOS_tables)(e_i, nB_j, nQ_k) for nQ_k in nQ_list)
         results = np.array(results)
         sorted_indices = np.argsort(results[:, 2])
         sorted_results = results[sorted_indices]
