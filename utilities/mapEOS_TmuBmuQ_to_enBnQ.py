@@ -5,6 +5,7 @@ import numpy as np
 import sys
 from os import path
 from scipy import interpolate
+from joblib import Parallel, delayed
 
 
 try:
@@ -19,42 +20,45 @@ hbarC    = 0.19733
 
 eos_table = np.loadtxt(EOS_table_file)
 
-n_muQ = 275
-n_muB = 801
-n_T   = 181
-muQarr = np.linspace(-0.137, 0.137, n_muQ)
-muBarr = np.linspace(0, 0.8, n_muB)
-Tarr = np.linspace(0.01, 0.19, n_T)
+n_muQ = 53; muQMIN = -0.13; muQMAX = 0.13
+n_muB = 161; muBMAX = 0.8
+n_T   = 33; TMIN = 0.01; TMAX = 0.17
+muQarr = np.linspace(muQMIN, muQMAX, n_muQ)
+muBarr = np.linspace(0, muBMAX, n_muB)
+Tarr = np.linspace(TMIN, TMAX, n_T)
 
 T_table   = eos_table[:, 0].reshape(n_T, n_muB, n_muQ)
 muB_table = eos_table[:, 1].reshape(n_T, n_muB, n_muQ)
 muQ_table = eos_table[:, 2].reshape(n_T, n_muB, n_muQ)
 ed_table  = eos_table[:, 3].reshape(n_T, n_muB, n_muQ)*(T_table**4.)/(hbarC**3.)        # GeV/fm^3
 nB_table  = eos_table[:, 4].reshape(n_T, n_muB, n_muQ)*(T_table**3.)/(hbarC**3.)        # 1/fm^3
-s_table   = eos_table[:, 5].reshape(n_T, n_muB, n_muQ)*(T_table**3.)/(hbarC**3.)         # 1/fm^3
+s_table   = eos_table[:, 5].reshape(n_T, n_muB, n_muQ)*(T_table**3.)/(hbarC**3.)        # 1/fm^3
 P_table   = eos_table[:, 6].reshape(n_T, n_muB, n_muQ)*(T_table**4.)/(hbarC**3.)        # GeV/fm^3
 muS_table = eos_table[:, 7].reshape(n_T, n_muB, n_muQ)
-nQ_table  = eos_table[:, -1].reshape(n_T, n_muB, n_muQ)*(T_table**3.)/(hbarC**3.)        # 1/fm^3
+nQ_table  = eos_table[:, -1].reshape(n_T, n_muB, n_muQ)*(T_table**3.)/(hbarC**3.)       # 1/fm^3
 
-f_p   = interpolate.RegularGridInterpolator((Tarr, muBarr, muQ_arr), P_table )
-f_e   = interpolate.RegularGridInterpolator((Tarr, muBarr, muQ_arr), ed_table)
-f_nB  = interpolate.RegularGridInterpolator((Tarr, muBarr, muQ_arr), nB_table)
-f_muS = interpolate.RegularGridInterpolator((Tarr, muBarr, muQ_arr), muS_table)
-f_nQ  = interpolate.RegularGridInterpolator((Tarr, muBarr, muQ_arr), nQ_table)
+f_p   = interpolate.RegularGridInterpolator((Tarr, muBarr, muQarr), P_table )
+f_e   = interpolate.RegularGridInterpolator((Tarr, muBarr, muQarr), ed_table)
+f_nB  = interpolate.RegularGridInterpolator((Tarr, muBarr, muQarr), nB_table)
+f_muS = interpolate.RegularGridInterpolator((Tarr, muBarr, muQarr), muS_table)
+f_nQ  = interpolate.RegularGridInterpolator((Tarr, muBarr, muQarr), nQ_table)
 
 
 def binary_search_1d(ed_local, muB_local, muQ_local):
+    """
+        return temperature at a given (e, muB, muQ)
+    """
     iteration = 0
-    T_min = 0.01; T_max = 0.18
-    e_low = f_e(T_min, muB_local, muQ_local)
-    e_up  = f_e(T_max, muB_local, muQ_local)
+    T_min = TMIN; T_max = TMAX
+    e_low = f_e(np.array([T_min, muB_local, muQ_local]))[0]
+    e_up  = f_e(np.array([T_max, muB_local, muQ_local]))[0]
     if (ed_local < e_low):
         return(T_min)
     elif (ed_local > e_up):
         return(T_max)
     else:
         T_mid = (T_max + T_min)/2.
-        e_mid = f_e(T_mid, muB_local, muQ_local)
+        e_mid = f_e(np.array([T_mid, muB_local, muQ_local]))[0]
         abs_err = abs(e_mid - ed_local)
         rel_err = abs_err/abs(e_mid + ed_local + 1e-15)
         while (rel_err > ACCURACY and abs_err > ACCURACY*1e-2
@@ -64,31 +68,33 @@ def binary_search_1d(ed_local, muB_local, muQ_local):
             else:
                 T_min = T_mid
             T_mid = (T_max + T_min)/2.
-            e_mid = f_e(T_mid, muB_local, muQ_local)
+            e_mid = f_e(np.array([T_mid, muB_local, muQ_local]))[0]
             abs_err = abs(e_mid - ed_local)
             rel_err = abs_err/abs(e_mid + ed_local + 1e-15)
             iteration += 1
-        return(T_mid)
+        return T_mid
 
 
 def binary_search_2d(ed_local, nB_local, muQ_local):
+    """
+        return temperature and muB at a given (e, nB, muQ)
+    """
     iteration = 0
-    muB_min = 0.0; muB_max = 0.8
-    T_min = 0.01; T_max = 0.18
+    muB_min = 0.0; muB_max = muBMAX
     T_max = binary_search_1d(ed_local, muB_min, muQ_local)
-    nB_min = f_nB(T_max, muB_min, muQ_local)
+    nB_min = f_nB(np.array([T_max, muB_min, muQ_local]))[0]
     T_min = binary_search_1d(ed_local, muB_max, muQ_local)
-    nB_max = f_nB(T_min, muB_max, muQ_local)
+    nB_max = f_nB(np.array([T_min, muB_max, muQ_local]))[0]
     if (nB_local < nB_min):
-        return(T_max, muB_min)
+        return T_max, muB_min
     elif (nB_local > nB_max):
-        return(T_min, muB_max)
+        return T_min, muB_max
     else:
         muB_mid = (muB_min + muB_max)/2.
-        T_mid = binary_search_1d(ed_local, muB_mid)
-        nB_mid = f_nB(T_mid, muB_mid, muQ_local)
+        T_mid = binary_search_1d(ed_local, muB_mid, muQ_local)
+        nB_mid = f_nB(np.array([T_mid, muB_mid, muQ_local]))[0]
         abs_err = abs(nB_mid - nB_local)
-        rel_err = abs_err/abs(nB_mid + nB_local + 1e-15)
+        rel_err = abs_err/max(1e-15, abs(nB_mid + nB_local))
         while (rel_err > ACCURACY and abs_err > ACCURACY*1e-2
                 and iteration < MAXITER):
             if (nB_local < nB_mid):
@@ -96,33 +102,34 @@ def binary_search_2d(ed_local, nB_local, muQ_local):
             else:
                 muB_min = muB_mid
             muB_mid = (muB_max + muB_min)/2.
-            T_mid = binary_search_1d(ed_local, muB_mid)
-            nB_mid = f_nB(T_mid, muB_mid, muQ_local)
+            T_mid = binary_search_1d(ed_local, muB_mid, muQ_local)
+            nB_mid = f_nB(np.array([T_mid, muB_mid, muQ_local]))[0]
             abs_err = abs(nB_mid - nB_local)
-            rel_err = abs_err/abs(nB_mid + nB_local)
+            rel_err = abs_err/max(1e-15, abs(nB_mid + nB_local))
             iteration += 1
-        return(T_mid, muB_mid)
+        return T_mid, muB_mid
 
 
 def binary_search_3d(ed_local, nB_local, nQ_local):
+    """
+        return (T, muB, muQ) at a given (e, nB, nQ)
+    """
     iteration = 0
-    muQ_min = -0.137; muB_max = 0.137
-    muB_min = 0.0; muB_max = 0.8
-    T_min = 0.01; T_max = 0.18
-    T_max, muB_min = binary_search_2d(ed_local, nB_local, muQ_min)
-    nQ_min = f_nQ(T_max, muB_min, muQ_min)
-    T_min, muB_max = binary_search_2d(ed_local, nB_local, muQ_max)
-    nQ_max = f_nQ(T_min, muB_max, muQ_max)
+    muQ_min = muQMIN; muQ_max = muQMAX
+    T1, muB1 = binary_search_2d(ed_local, nB_local, muQ_min)
+    nQ_min = f_nQ(np.array([T1, muB1, muQ_min]))
+    T2, muB2 = binary_search_2d(ed_local, nB_local, muQ_max)
+    nQ_max = f_nQ(np.array([T2, muB2, muQ_max]))
     if (nQ_local < nQ_min):
-        return(T_max, muB_min, muQ_min)
+        return(T1, muB1, muQ_min)
     elif (nQ_local > nQ_max):
-        return(T_min, muB_max, muQ_max)
+        return(T2, muB2, muQ_max)
     else:
         muQ_mid = (muQ_min + muQ_max)/2.
         T_mid, muB_mid = binary_search_2d(ed_local, nB_local, muQ_mid)
-        nQ_mid = f_nQ(T_mid, muB_mid, muQ_mid)
+        nQ_mid = f_nQ(np.array([T_mid, muB_mid, muQ_mid]))
         abs_err = abs(nQ_mid - nQ_local)
-        rel_err = abs_err/abs(nQ_mid + nQ_local + 1e-15)
+        rel_err = abs_err/max(1e-15, abs(nQ_mid + nQ_local))
         while (rel_err > ACCURACY and abs_err > ACCURACY*1e-2
                 and iteration < MAXITER):
             if (nQ_local < nQ_mid):
@@ -131,43 +138,65 @@ def binary_search_3d(ed_local, nB_local, nQ_local):
                 muQ_min = muQ_mid
             muQ_mid = (muQ_max + muQ_min)/2.
             T_mid, muB_mid = binary_search_2d(ed_local, nB_local, muQ_mid)
-            nQ_mid = f_nQ(T_mid, muB_mid, muQ_mid)
+            nQ_mid = f_nQ(np.array([T_mid, muB_mid, muQ_mid]))
             abs_err = abs(nQ_mid - nQ_local)
-            rel_err = abs_err/abs(nQ_mid + nQ_local)
+            rel_err = abs_err/max(1e-15, abs(nQ_mid + nQ_local))
             iteration += 1
-        return(T_mid, muB_mid, muQ_mid)
+        return T_mid, muB_mid, muQ_mid
 
 
 def invert_EOS_tables(ed_local, nB_local, nQ_local):
-    T_local, muB_local, muQ_local = binary_search_3d(ed_local, nB_local, nQ_local)
-    P_local            = f_p(T_local, muB_local, muQ_local)[0]
-    muS_local          = f_muS(T_local, muB_local, muQ_local)[0]
-    return(ed_local, nB_local, nQ_local, P_local, T_local,
-           muB_local, muS_local, muQ_local)
+    T_local, muB_local, muQ_local = binary_search_3d(ed_local, nB_local,
+                                                     nQ_local)
+    P_local = f_p(np.array([T_local, muB_local, muQ_local]))[0]
+    muS_local = f_muS(np.array([T_local, muB_local, muQ_local]))[0]
+    return [ed_local, nB_local, nQ_local, P_local, T_local,
+            muB_local, muS_local, muQ_local]
 
-#T_local, muB_local, muQ_local = binary_search_3d(1.0, 0.02, 0.01)
-#print(T_local, muB_local, muQ_local, f_e(T_local, muB_local, muQ_local),
-#      f_nB(T_local, muB_local, muQ_local), f_nQ(T_local, muB_local, muQ_local))
+e_check = 0.15; nB_check = 0.02; nQ_check = 0.01
+T_local, muB_local, muQ_local = binary_search_3d(e_check, nB_check, nQ_check)
+print(f"check e = {e_check}, nB = {nB_check}, nQ = {nQ_check}")
+print(f"T = {T_local:.3f}, muB = {muB_local:.3f}, muQ = {muQ_local:.3f},"
+      + f"e0 = {f_e(np.array([T_local, muB_local, muQ_local]))[0]:.3f},"
+      + f"nB = {f_nB(np.array([T_local, muB_local, muQ_local]))[0]:.3f},"
+      + f"nQ = {f_nQ(np.array([T_local, muB_local, muQ_local]))[0]:.3f}")
 
-Ne = 200
-ed_list = np.linspace(1e-2, 2, Ne)
-nBmax_list = np.interp(ed_list, ed_table[:, 800, :], nB_table[:, 800, :])
-nQmin_list = np.interp(ed_list, ed_table[:, :, 0], nQ_table[:, :, 0])
-nQmax_list = np.interp(ed_list, ed_table[:, :, 274], nQ_table[:, :, 274])
-NnB = 200
-NnQ = 100
+Ne = 70
+NnB = 50
+NnQ = 30
+ed_list = np.linspace(1e-2, 0.7, Ne)
 
 # generate tables
-print("Generating table ... ")
+print(f"Generating table ... ")
 
 # generate the grid arrays
 output = []
 for i, e_i in enumerate(ed_list):
-    nB_list = np.linspace(0.0, nBmax_list[i], NnB)
+    print(f"e = {e_i:.3f} GeV/fm^3 ...")
+    nBmax = 0.0
+    for k in range(n_muQ):
+        nBmax_tmp = np.interp(e_i, ed_table[:, n_muB-1, k],
+                              nB_table[:, n_muB-1, k])
+        if nBmax < nBmax_tmp:
+            nBmax = nBmax_tmp
+    nB_list = np.linspace(0.0, nBmax, NnB)
     for j, nB_j in enumerate(nB_list):
-        nQ_list = np.linspace(nQmin_list[j], nQmax_list[j], NnQ)
-        for k, nQ_k in enumerate(nQ_list):
-            output.append(invert_EOS_tables(e_i, nB_j, nQ_k))
+        print(f"nB = {nB_j:.3e} fm^{-3} ...")
+        T1, muB1 = binary_search_2d(e_i, nB_j, muQMIN)
+        nQmin = f_nQ(np.array([T1, muB1, muQMIN]))
+        T2, muB2 = binary_search_2d(e_i, nB_j, muQMAX)
+        nQmax = f_nQ(np.array([T2, muB2, muQMAX]))
+        nQ_list = np.linspace(nQmin, nQmax, NnQ)
+        #for k, nQ_k in enumerate(nQ_list):
+        #    output.append(invert_EOS_tables(e_i, nB_j, nQ_k))
+        num_jobs = -1  # Set to -1 to use all available cores
+        results = Parallel(n_jobs=num_jobs)(
+            delayed(invert_EOS_tables)(e_i, nB_j, nQ_k[0]) for nQ_k in nQ_list)
+        results = np.array(results)
+        sorted_indices = np.argsort(results[:, 2])
+        sorted_results = results[sorted_indices]
+        #print(sorted_results)
+        output.append(sorted_results)
 
 # save to files
 np.savetxt("NEOS_converted.dat", output, fmt='%.6e', delimiter="  ",

@@ -24,7 +24,9 @@ int main() {
     Stopwatch sw;
     sw.tic();
 
-    particleList hadronList("EOS/pdg.dat");
+    //particleList hadronList("EOS/pdg.dat");
+    particleList hadronList("EOS/pdg-urqmd_v3.3+.dat");
+
     //hadronList.calculateSystemEOS(0., 0., 0.);
     //hadronList.calculateSystemEOS2D(0., 0.);
     //hadronList.calculateSystemEOS2DNS(0., 0.);

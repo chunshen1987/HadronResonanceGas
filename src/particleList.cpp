@@ -665,8 +665,8 @@ void particleList::calculateSystemEOS2DNS(double n_S, double mu_Q) {
     double muB_f = 0.8;
     double dmuB = (muB_f - muB_i)/(nmuB - 1);
 
-    double HBARC = 0.19733;
-    double unitFac = HBARC*HBARC*HBARC;
+    const double HBARC = 0.19733;
+    const double unitFac = HBARC*HBARC*HBARC;
 
     std::vector<double> temp_ptr(nT, 0.);
     std::vector<double> muB_ptr(nmuB, 0.);
@@ -820,23 +820,23 @@ void particleList::calculateSystemEOS3DNS(double n_S) {
     cout << "calculate the EOS of the system with n_S = " << n_S
          << " fm^-3 ..." << endl;
 
-    int nT = 171;
+    int nT = 33;
     double T_i = 0.01;          // unit: (GeV)
-    double T_f = 0.18;          // unit: (GeV)
+    double T_f = 0.17;          // unit: (GeV)
     double dT = (T_f - T_i)/(nT - 1);
 
-    int nmuB = 801;
+    int nmuB = 161;
     double muB_i = 0.;         // unit: GeV
     double muB_f = 0.8;        // unit: GeV
     double dmuB = (muB_f - muB_i)/(nmuB - 1);
 
-    int nmuQ = 275;
-    double muQ_i = -0.137;    // unit: GeV
-    double muQ_f = 0.137;     // unit: GeV
+    int nmuQ = 53;
+    double muQ_i = -0.13;    // unit: GeV
+    double muQ_f = 0.13;     // unit: GeV
     double dmuQ = (muQ_f - muQ_i)/(nmuQ - 1);
 
-    double HBARC = 0.19733;
-    double unitFac = HBARC*HBARC*HBARC;
+    const double HBARC = 0.19733;
+    const double unitFac = HBARC*HBARC*HBARC;
 
     std::vector<double> temp_ptr(nT, 0.);
     std::vector<double> muB_ptr(nmuB, 0.);
