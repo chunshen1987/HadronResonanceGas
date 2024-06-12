@@ -575,6 +575,64 @@ void particleList::calculateSystemEOS(double mu_B, double mu_S, double mu_Q) {
 }
 
 
+void particleList::calculateSystemEOSfromTable(
+    std::vector<std::vector<double>> &points) {
+    // calculate the EOS of given system, e, p, s
+    // at given T, mu_B, mu_Q, and mu_S
+    cout << "calculate the EOS of the system from table ... " << endl;
+
+    int nPoints = points.size();
+    std::vector<double> temp_ptr(nPoints, 0.);
+    std::vector<double> ed_ptr(nPoints, 0.);
+    std::vector<double> sd_ptr(nPoints, 0.);
+    std::vector<double> pressure_ptr(nPoints, 0.);
+    std::vector<double> net_baryon_ptr(nPoints, 0.);
+    std::vector<double> net_electric_ptr(nPoints, 0.);
+    std::vector<double> net_strangeness_ptr(nPoints, 0.);
+    for (int i = 0; i < nPoints; i++) {
+        double T_local = points[i][0];
+        double muB_local = points[i][1];
+        double muQ_local = points[i][2];
+        double muS_local = points[i][3];
+        calculate_particle_yield(T_local, muB_local, muS_local, muQ_local);
+        net_baryon_ptr[i] = calculateSystemNetbaryonDensity();
+        ed_ptr[i] = calculateSystemenergyDensity(T_local);
+        pressure_ptr[i] = calculateSystemPressure(T_local);
+        sd_ptr[i] = calculateSystementropyDensity(T_local);
+        net_electric_ptr[i] = calculateSystemNetElectricChargeDensity();
+        net_strangeness_ptr[i] = calculateSystemNetStrangenessDensity();
+    }
+
+    // output EOS table
+    const double HBARC = 0.19733;
+    const double unitFac = HBARC*HBARC*HBARC;
+    ostringstream EOSfilename;
+    EOSfilename << "./EOS_table.dat";
+    ofstream output(EOSfilename.str().c_str());
+    output << "# T [GeV]  muB [GeV]  muQ [GeV]  muS [GeV] "
+           << "e/T^4  nB/T^3  nQ/T^3  nS/T^3  P/T^4  s/T^3" << endl;
+    for (int i = 0; i < nPoints; i++) {
+        double T_local = points[i][0];
+        double T4 = pow(T_local, 4);
+        double T3 = pow(T_local, 3);
+        double muB_local = points[i][1];
+        double muQ_local = points[i][2];
+        double muS_local = points[i][3];
+        output << scientific << setw(20) << setprecision(8)
+               << T_local << "   " << muB_local << "  " << muQ_local << "  "
+               << muS_local << "   "
+               << ed_ptr[i]/T4*unitFac << "   "
+               << net_baryon_ptr[i]/T3*unitFac << "  "
+               << net_electric_ptr[i]/T3*unitFac << "  "
+               << net_strangeness_ptr[i]/T3*unitFac << "  "
+               << pressure_ptr[i]/T4*unitFac << "   "
+               << sd_ptr[i]/T3*unitFac
+               << endl;
+    }
+    output.close();
+}
+
+
 void particleList::calculateSystemEOS2D(double mu_S, double mu_Q) {
     // calculate the EOS of given system, e, p, s as functions of T and mu_B
     // at given mu_S and mu_Q

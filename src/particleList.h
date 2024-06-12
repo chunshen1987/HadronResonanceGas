@@ -51,6 +51,8 @@ class particleList {
 
     void calculateSystemEOS3DNS(double n_S);
 
+    void calculateSystemEOSfromTable(std::vector<std::vector<double>> &points);
+
     int get_particle_idx(int particle_monval);
     void calculate_particle_chemical_potential(
                     double Temperature, Chemical_potential* mu_tb);
