@@ -21,7 +21,7 @@ class particle {
     int charge;             //! charge
     int decays;             //! amount of decays listed for this resonance
     int stable;             //! defines whether this particle is stable
-    double mu;              //! chemical potential
+    double mu_;             //! chemical potential
     int sign;               //! Bosons or Fermions
 
     double yield;                //! particle thermal yield at given T and mu
@@ -30,17 +30,17 @@ class particle {
     double ed, sd, pressure;     //! thermodynamic quantities at given T and mu
 
     int NdecayChannel;           //! number of decay channels
-    double* decays_branchratio;  //! branching ratio of each decay channel
+    std::vector<double> decays_branchratio;  //! branching ratio of each decay channel
     // number of daughter particles of each decay channel
-    int* decays_Npart;
-    int** decays_part;           //! identity of daughter particles
+    std::vector<int> decays_Npart;
+    std::vector<std::vector<int>> decays_part;           //! identity of daughter particles
 
     // array to record particle decay probability
     // for the particle decays into stable ones
-    double* decay_probability;
+    std::vector<double> decay_probability;
 
-    int channelIdx;
-    int trunOrder;               // truncated order in the summation
+    int channelIdx_;
+    int trunOrder_;               // truncated order in the summation
     std::vector<double> yieldCached;
 
  public:
@@ -48,13 +48,11 @@ class particle {
              double width_in, int gspin_in, int baryon_in, int strange_in,
              int charm_in, int bottom_in, int gisospin_in, int charge_in,
              int NdecayChannel_in);
-    ~particle();
+    ~particle() {};
 
     void addResonancedecays(double branchratio, int Npart, int* decays_part);
     void create_decay_probability_array(int dimension) {
-        decay_probability = new double[dimension];
-        for (int i = 0; i < dimension; i++)
-            decay_probability[i] = 0.0;
+        decay_probability.resize(dimension, 0.);
     }
 
     void calculateChemicalpotential(double mu_B, double mu_S, double mu_Q);
@@ -76,7 +74,7 @@ class particle {
     int getStrangeness() const {return(strange);}
     int getElectricCharge() const {return(charge);}
     int getSpinfactor() {return(gspin);}
-    double getMu() {return(mu);}
+    double getMu() {return(mu_);}
     int getSign() {return(sign);}
     double getParticleYield() {return(yield);}
     double getEnergyDensity() {return(ed);}
@@ -90,7 +88,7 @@ class particle {
     double getdecay_probability(int i) {return(decay_probability[i]);}
     int getStable() {return(stable);}
     void setStable(int s) {stable = s;}
-    void setMu(double chem) {mu = chem;}
+    void setMu(double chem) {mu_ = chem;}
     void set_decay_probability(int i, double val) {
         decay_probability[i] = val;
     }

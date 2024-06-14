@@ -16,7 +16,7 @@ particle::particle(int monval_in, string name_in, double mass_in,
                    int strange_in, int charm_in, int bottom_in,
                    int gisospin_in, int charge_in, int NdecayChannel_in) {
     hbarC = 0.19733;
-    trunOrder = 5;
+    trunOrder_ = 5;
     monval = monval_in;
     name = name_in;
     mass = mass_in;
@@ -31,51 +31,43 @@ particle::particle(int monval_in, string name_in, double mass_in,
     NdecayChannel = NdecayChannel_in;
     stable = 0;
     stable_yield = 0.0;
-    yieldCached.resize(trunOrder, 0.);
+    yieldCached.resize(trunOrder_, 0.);
 
     // determine Bose/Fermi statistic for particle
-    if (baryon == 0)
+    if (baryon == 0) {
        sign = -1;
-    else
+    } else {
        sign = 1;
+    }
 
-    decays_branchratio = new double[NdecayChannel];
-    decays_Npart = new int[NdecayChannel];
-    decays_part = new int* [NdecayChannel];
-
-    channelIdx = 0;
-}
-
-
-particle::~particle() {
-    delete [] decays_branchratio;
-    delete [] decays_Npart;
-    for (int i = 0; i < NdecayChannel; i++)
-       delete [] decays_part[i];
-    delete [] decays_part;
-    delete [] decay_probability;
+    decays_branchratio.resize(NdecayChannel, 0.);
+    decays_Npart.resize(NdecayChannel, 0);
+    channelIdx_ = 0;
 }
 
 
 void particle::addResonancedecays(double branchratio, int Npart,
                                   int* decayChannelparts) {
 // add resonance decay channel for particle
-    if (channelIdx > NdecayChannel-1) {
+    if (channelIdx_ > NdecayChannel-1) {
         cout << "Warning: channelidx exceed number of decay channels! "
              << "Please check" << endl;
         exit(1);
     }
-    decays_branchratio[channelIdx] = branchratio;
-    decays_Npart[channelIdx] = Npart;
-    decays_part[channelIdx] = new int[Npart];
-    for (int i = 0; i < Npart; i++)
-       decays_part[channelIdx][i] = decayChannelparts[i];
-    channelIdx++;
+    decays_branchratio[channelIdx_] = branchratio;
+    decays_Npart[channelIdx_] = Npart;
+
+    std::vector<int> decayPart(Npart, 0);
+    for (int i = 0; i < Npart; i++) {
+       decayPart[i] = decayChannelparts[i];
+    }
+    decays_part.push_back(decayPart);
+    channelIdx_++;
 
     if (NdecayChannel == 1 && decays_Npart[0] == 1
-       && decays_part[0][0] == monval
-       && fabs(branchratio - 1.0) < 1e-15) {
-       // particle is stable
+        && decays_part[0][0] == monval
+        && fabs(branchratio - 1.0) < 1e-15) {
+        // particle is stable
         stable = 1;
     }
 }
@@ -92,12 +84,15 @@ int particle::getAntiparticleMonval() {
 
 void particle::calculateChemicalpotential(double mu_B, double mu_S,
                                           double mu_Q) {
-    mu = mu_B*baryon + mu_S*strange + mu_Q*charge;
-    if (std::abs(mu) > mass) {
-        cout << "mu = " << mu << " GeV, mass = " << mass << " GeV, muB ="
+    mu_ = mu_B*baryon + mu_S*strange + mu_Q*charge;
+    if (std::abs(mu_) > mass) {
+        cout << "mu = " << mu_ << " GeV, mass = " << mass << " GeV, muB ="
              << mu_B << " GeV, muS = " << mu_S << " GeV, muQ = " << mu_Q
              << " GeV. B = " << baryon << ", S = " << strange << ", Q = "
              << charge << endl;
+        if (sign == 1) {
+            trunOrder_ = 1;
+        }
     }
 }
 
@@ -109,13 +104,13 @@ void particle::calculateParticleYield(double Temperature, double mu_B,
 
     double beta = 1./Temperature;
     calculateChemicalpotential(mu_B, mu_S, mu_Q);
-    double lambda = exp(beta*mu);  // fugacity factor
+    double lambda = exp(beta*mu_);  // fugacity factor
 
     double prefactor = gspin/(2*M_PI*M_PI)/hbarC/hbarC/hbarC;
     double mbeta = mass*beta;
     double prefactor_Neq = mass*mass*Temperature;
 
-    for (int n = 1; n < trunOrder; n++) {
+    for (int n = 1; n < trunOrder_; n++) {
         double arg = n*mbeta;  // argument inside bessel functions
         double theta = pow(-sign, n-1);
         double fugacity = pow(lambda, n);
@@ -132,9 +127,9 @@ void particle::calculateParticleYieldFugacity(double T, double muB, double muS,
                                               double muQ) {
     double N_eq = 0.0;                  // equilibrium contribution
     calculateChemicalpotential(muB, muS, muQ);
-    double lambda = exp(mu/T);          // fugacity factor
+    double lambda = exp(mu_/T);          // fugacity factor
     double fugacity = 1;
-    for (int n = 1; n < trunOrder; n++) {
+    for (int n = 1; n < trunOrder_; n++) {
         fugacity *= lambda;
         N_eq += fugacity*yieldCached[n-1];
     }
@@ -146,9 +141,9 @@ double particle::calculateEnergydensity(double Temperature) {
     double results;
     results = 0.0;
     double prefactor = gspin/(2*M_PI*M_PI)*pow(mass, 4);
-    for (int j = 0; j <trunOrder; j++) {
+    for (int j = 0; j <trunOrder_; j++) {
         double arg = (j+1)*mass/Temperature;
-        double lambda = exp(mu/Temperature);
+        double lambda = exp(mu_/Temperature);
         results += (pow((-1.0)*sign, j)*pow(lambda, j+1)
                     *(3.*gsl_sf_bessel_Kn(2, arg)/(arg*arg)
                       + gsl_sf_bessel_Kn(1, arg)/arg));
@@ -163,9 +158,9 @@ double particle::calculatePressure(double Temperature) {
     double results;
     results = 0.0;
     double prefactor = gspin/(2*M_PI*M_PI)*pow(mass, 2)*pow(Temperature, 2);
-    for (int j = 0; j < trunOrder; j++) {
+    for (int j = 0; j < trunOrder_; j++) {
         double arg = (j+1)*mass/Temperature;
-        double lambda = exp(mu/Temperature);
+        double lambda = exp(mu_/Temperature);
         results += (pow((-1.0)*sign, j)/pow(j+1., 2)
                     *pow(lambda, j+1)*gsl_sf_bessel_Kn(2, arg));
     }
@@ -178,7 +173,7 @@ double particle::calculatePressure(double Temperature) {
 //! calculate the entropy density using the first law of thermodynamics
 //! at give T and mu
 double particle::calculateEntropydensity(double Temperature) {
-    sd = (ed + pressure - mu*yield)/Temperature;    // unit : 1/fm^3
+    sd = (ed + pressure - mu_*yield)/Temperature;    // unit : 1/fm^3
     return(sd);
 }
 
@@ -188,9 +183,9 @@ double particle::calculate_dndmu(double Temperature) {
     double results;
     results = 0.0;
     double prefactor = gspin/(2*M_PI*M_PI)*mass;
-    for (int j = 0; j < trunOrder; j++) {
+    for (int j = 0; j < trunOrder_; j++) {
         double arg = (j+1)*mass/Temperature;
-        double lambda = exp(mu/Temperature);
+        double lambda = exp(mu_/Temperature);
         results +=
             pow((-1.0)*sign, j)*pow(lambda, j+1)*gsl_sf_bessel_Kn(2, arg);
     }
@@ -204,9 +199,9 @@ double particle::calculate_dPoverTdmu(double Temperature) {
     double results;
     results = 0.0;
     double prefactor = gspin/(2*M_PI*M_PI)*mass*mass;
-    for (int j = 0; j < trunOrder; j++) {
+    for (int j = 0; j < trunOrder_; j++) {
         double arg = (j+1)*mass/Temperature;
-        double lambda = exp(mu/Temperature);
+        double lambda = exp(mu_/Temperature);
        results += (pow((-1.0)*sign, j)*pow(lambda, j+1)/(j+1)
                    *gsl_sf_bessel_Kn(2, arg));
     }
@@ -220,9 +215,9 @@ double particle::calculate_deoverTdmu(double Temperature) {
     double results;
     results = 0.0;
     double prefactor = gspin/(2*M_PI*M_PI)*pow(mass, 4);
-    for (int j = 0; j < trunOrder; j++) {
+    for (int j = 0; j < trunOrder_; j++) {
         double arg = (j+1)*mass/Temperature;
-        double lambda = exp(mu/Temperature);
+        double lambda = exp(mu_/Temperature);
         results += (pow((-1.0)*sign, j)*pow(lambda, j+1)*(j+1)
                     *(3*gsl_sf_bessel_Kn(2, arg)/(arg*arg)
                       + gsl_sf_bessel_Kn(1, arg)/arg));
@@ -237,6 +232,6 @@ double particle::calculate_dsdmu(double Temperature) {
     double dPoverTdmu = calculate_dPoverTdmu(Temperature);
     double deoverTdmu = calculate_deoverTdmu(Temperature);
     double dndmu = calculate_dndmu(Temperature);
-    double dsdmu = dPoverTdmu - yield - mu*dndmu + deoverTdmu;
+    double dsdmu = dPoverTdmu - yield - mu_*dndmu + deoverTdmu;
     return(dsdmu);
 }
